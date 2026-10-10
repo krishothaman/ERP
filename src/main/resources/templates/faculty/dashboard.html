@@ -1,39 +1,83 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout :: head('My Courses')}"></head>
+<head th:replace="~{layout :: head('Faculty Dashboard')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Dashboard & Courses')}"></header>
+        <div class="content">
 
-<div class="container">
-    <h1 class="h4 page-title">Welcome, <span th:text="${faculty.name}">Faculty</span></h1>
-    <p class="text-muted" th:text="${faculty.department} + ' Department'"></p>
-
-    <div class="row g-3">
-        <div class="col-md-6 col-lg-4" th:each="c : ${courses}">
-            <div class="card h-100 p-4">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge text-bg-primary" th:text="${c.code}"></span>
-                    <span class="small text-muted" th:text="${c.credits} + ' credits'"></span>
-                </div>
-                <h2 class="h6 fw-semibold" th:text="${c.name}"></h2>
-                <p class="small text-muted mb-3">
-                    <span th:text="${c.department} + ' / Year ' + ${c.year}"></span> &middot;
-                    <span th:text="${studentCounts[c.id]} + ' students'"></span>
-                </p>
-                <div class="mt-auto d-flex gap-2">
-                    <a class="btn btn-sm btn-primary" th:href="@{/faculty/attendance(courseId=${c.id})}">
-                        <i class="bi bi-calendar-check me-1"></i>Attendance</a>
-                    <a class="btn btn-sm btn-outline-primary" th:href="@{/faculty/marks(courseId=${c.id})}">
-                        <i class="bi bi-pencil-square me-1"></i>Marks</a>
+            <div class="page-head">
+                <div>
+                    <h2 class="page-title">Welcome, <span th:text="${faculty.name}">Faculty</span></h2>
+                    <p class="page-sub" th:text="${faculty.department} + ' Department · ' + ${faculty.email}"></p>
                 </div>
             </div>
-        </div>
-        <div class="col-12" th:if="${#lists.isEmpty(courses)}">
-            <div class="card p-4 text-center text-muted">No courses are assigned to you yet. Ask the admin to assign one.</div>
-        </div>
-    </div>
-</div>
 
+            <div class="row g-3 mb-4">
+                <div class="col-sm-4">
+                    <div class="stat"><div>
+                        <div class="stat-label">My courses</div>
+                        <div class="stat-value" th:text="${#lists.size(stats)}">0</div>
+                    </div><span class="stat-icon"><i class="bi bi-journal-bookmark"></i></span></div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stat"><div>
+                        <div class="stat-label">Students taught</div>
+                        <div class="stat-value" th:text="${totalStudents}">0</div>
+                        <div class="stat-note">Across all my courses</div>
+                    </div><span class="stat-icon"><i class="bi bi-people"></i></span></div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="stat"><div>
+                        <div class="stat-label">Below 75% attendance</div>
+                        <div class="stat-value" th:classappend="${totalLow > 0} ? 'text-low'" th:text="${totalLow}">0</div>
+                        <div class="stat-note">Student-course pairs needing attention</div>
+                    </div><span class="stat-icon"><i class="bi bi-exclamation-triangle"></i></span></div>
+                </div>
+            </div>
+
+            <h3 class="h5 mb-3">My courses</h3>
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-4" th:each="s : ${stats}">
+                    <div class="panel h-100 d-flex flex-column">
+                        <div class="panel-body d-flex flex-column flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="pill pill-tag mono" th:text="${s.course().code}"></span>
+                                <span class="small text-muted" th:text="${s.course().credits} + ' credits'"></span>
+                            </div>
+                            <h4 class="h6 fw-semibold mb-1" th:text="${s.course().name}"></h4>
+                            <p class="small text-muted mb-3"
+                               th:text="${s.course().department} + ' · Year ' + ${s.course().year} + ' · ' + ${s.students()} + ' students'"></p>
+
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">Class attendance</span>
+                                <strong th:classappend="${s.averageTotalPct() < 75 and s.averageTotalPct() > 0} ? 'text-low'"
+                                        th:text="${s.averageTotalPct()} + '%'"></strong>
+                            </div>
+                            <div class="meter mb-2" th:classappend="${s.averageTotalPct() < 75 and s.averageTotalPct() > 0} ? 'low'">
+                                <span th:style="'width:' + ${s.averageTotalPct()} + '%'"></span></div>
+                            <p class="small mb-3" th:classappend="${s.lowCount() > 0} ? 'text-low' : 'text-muted'"
+                               th:text="${s.lowCount() > 0} ? ${s.lowCount()} + ' student(s) below 75%' : 'Everyone is above 75%'"></p>
+
+                            <div class="mt-auto d-flex gap-2">
+                                <a class="btn btn-sm btn-primary" th:href="@{/faculty/attendance(courseId=${s.course().id})}">
+                                    <i class="bi bi-calendar2-check me-1"></i>Attendance</a>
+                                <a class="btn btn-sm btn-outline" th:href="@{/faculty/marks(courseId=${s.course().id})}">
+                                    <i class="bi bi-pencil-square me-1"></i>Marks</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12" th:if="${#lists.isEmpty(stats)}">
+                    <div class="panel empty">No courses are assigned to you yet. Ask the admin to assign one.</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>
 </html>

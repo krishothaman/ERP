@@ -1,44 +1,53 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout :: head('Marks')}"></head>
+<head th:replace="~{layout :: head('Enter Marks')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Enter Marks')}"></header>
+        <div class="content" style="max-width: 980px;">
 
-<div class="container" style="max-width: 860px;">
-    <a class="small text-decoration-none" th:href="@{/faculty}"><i class="bi bi-arrow-left"></i> My courses</a>
-    <h1 class="h4 page-title mt-2">Marks &middot; <span th:text="${course.code} + ' ' + ${course.name}"></span></h1>
-    <p class="text-muted">Enter marks out of 100. Leave a box empty if not graded yet.</p>
-
-    <div th:if="${msg}" class="alert alert-success py-2" th:text="${msg}"></div>
-    <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
-
-    <form th:action="@{/faculty/marks}" method="post">
-        <input type="hidden" name="courseId" th:value="${course.id}">
-        <div class="card">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th>Roll No</th><th>Name</th><th style="width: 160px;">Marks (0-100)</th></tr></thead>
-                    <tbody>
-                    <tr th:each="s : ${students}">
-                        <td class="fw-semibold" th:text="${s.rollNo}"></td>
-                        <td th:text="${s.name}"></td>
-                        <td>
-                            <input class="form-control form-control-sm" type="number" min="0" max="100"
-                                   th:name="'m_' + ${s.id}" th:value="${marks[s.id]}">
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(students)}">
-                        <td colspan="3" class="text-center text-muted py-4">No students in this department and year.</td>
-                    </tr>
-                    </tbody>
-                </table>
+            <a class="small text-decoration-none" th:href="@{/faculty}"><i class="bi bi-arrow-left"></i> My courses</a>
+            <div class="page-head mt-2">
+                <div>
+                    <h2 class="page-title"><span class="mono fs-5 align-middle me-2" th:text="${course.code}"></span><span th:text="${course.name}"></span></h2>
+                    <p class="page-sub">Enter marks out of 100. Leave a box empty if not graded yet.</p>
+                </div>
             </div>
-        </div>
-        <button class="btn btn-primary mt-3" type="submit" th:disabled="${#lists.isEmpty(students)}">
-            <i class="bi bi-save me-1"></i>Save marks</button>
-    </form>
-</div>
 
+            <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form th:action="@{/faculty/marks}" method="post">
+                <input type="hidden" name="courseId" th:value="${course.id}">
+                <div class="panel">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead><tr><th>Roll No</th><th>Name</th><th style="width: 170px;">Marks (0-100)</th></tr></thead>
+                            <tbody>
+                            <tr th:each="s : ${students}">
+                                <td class="mono" th:text="${s.rollNo}"></td>
+                                <td th:text="${s.name}"></td>
+                                <td>
+                                    <input class="form-control form-control-sm" type="number" min="0" max="100"
+                                           th:name="'m_' + ${s.id}" th:value="${marks[s.id]}" th:aria-label="'Marks for ' + ${s.name}">
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(students)}">
+                                <td colspan="3" class="empty">No students in this department and year.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3" type="submit" th:disabled="${#lists.isEmpty(students)}">
+                    <i class="bi bi-save me-1"></i>Save marks</button>
+            </form>
+
+        </div>
+    </main>
+</div>
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>
 </html>

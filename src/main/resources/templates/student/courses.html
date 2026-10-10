@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Course List')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Course List')}"></header>
+        <div class="content">
+
+            <div class="page-head">
+                <div>
+                    <h2 class="page-title">Course list</h2>
+                    <p class="page-sub">Courses registered for your department and year.</p>
+                </div>
+                <span class="pill pill-tag" th:text="${#lists.size(rows)} + ' courses · ' + ${credits} + ' credits'"></span>
+            </div>
+
+            <div class="panel">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Code</th><th>Course</th><th class="num">Credits</th><th>Faculty</th><th>Status</th></tr></thead>
+                        <tbody>
+                        <tr th:each="r : ${rows}">
+                            <td class="mono" th:text="${r.course().code}"></td>
+                            <td class="fw-semibold text-dark" th:text="${r.course().name}"></td>
+                            <td class="num" th:text="${r.course().credits}"></td>
+                            <td>
+                                <span th:if="${r.course().faculty}" th:text="${r.course().faculty.name}"></span>
+                                <span th:unless="${r.course().faculty}" class="pill pill-mute">To be assigned</span>
+                            </td>
+                            <td>
+                                <span th:if="${r.grade()}" class="pill pill-tag"><i class="bi bi-check2"></i>Graded</span>
+                                <span th:unless="${r.grade()}" class="pill pill-mute">In progress</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="empty">No courses for your department and year yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>

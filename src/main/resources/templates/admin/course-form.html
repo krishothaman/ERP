@@ -2,65 +2,73 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${course.id} == null ? 'Add Course' : 'Edit Course')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar(${course.id} == null ? 'Add Course' : 'Edit Course')}"></header>
+        <div class="content" style="max-width: 820px;">
 
-<div class="container" style="max-width: 720px;">
-    <div class="card p-4">
-        <h1 class="h5 mb-3" th:text="${course.id} == null ? 'Add course' : 'Edit course'">Course</h1>
+            <a class="small text-decoration-none" th:href="@{/admin/courses}"><i class="bi bi-arrow-left"></i> Courses</a>
+            <div class="page-head mt-2">
+                <h2 class="page-title" th:text="${course.id} == null ? 'Add course' : 'Edit course'">Course</h2>
+            </div>
 
-        <form th:action="@{/admin/courses/save}" th:object="${course}" method="post" novalidate>
-            <input type="hidden" th:field="*{id}">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label" for="code">Code</label>
-                    <input class="form-control" th:field="*{code}" th:readonly="${course.id != null}"
-                           th:classappend="${#fields.hasErrors('code')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{code}"></div>
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label" for="name">Course name</label>
-                    <input class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{name}"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="department">Department</label>
-                    <input class="form-control" th:field="*{department}" list="departments"
-                           th:classappend="${#fields.hasErrors('department')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{department}"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="year">Year</label>
-                    <select class="form-select" th:field="*{year}" th:classappend="${#fields.hasErrors('year')} ? 'is-invalid'">
-                        <option value="">Select year</option>
-                        <option th:each="y : ${#numbers.sequence(1, 4)}" th:value="${y}" th:text="'Year ' + ${y}"></option>
-                    </select>
-                    <div class="invalid-feedback" th:errors="*{year}"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="credits">Credits</label>
-                    <input class="form-control" type="number" min="1" max="10" th:field="*{credits}"
-                           th:classappend="${#fields.hasErrors('credits')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{credits}"></div>
-                </div>
-                <div class="col-12">
-                    <label class="form-label" for="facultyId">Faculty</label>
-                    <select class="form-select" id="facultyId" name="facultyId">
-                        <option value="">Unassigned</option>
-                        <option th:each="f : ${facultyList}" th:value="${f.id}"
-                                th:text="${f.name} + ' (' + ${f.department} + ')'"
-                                th:selected="${f.id == selectedFacultyId}"></option>
-                    </select>
-                    <div class="form-text">Students of this department and year automatically take this course.</div>
-                </div>
+            <div class="panel panel-body">
+                <form th:action="@{/admin/courses/save}" th:object="${course}" method="post" novalidate>
+                    <input type="hidden" th:field="*{id}">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="code">Code</label>
+                            <input class="form-control mono" th:field="*{code}" th:readonly="${course.id != null}"
+                                   th:classappend="${#fields.hasErrors('code')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{code}"></div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" for="name">Course name</label>
+                            <input class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="department">Department</label>
+                            <input class="form-control" th:field="*{department}" list="departments"
+                                   th:classappend="${#fields.hasErrors('department')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{department}"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="year">Year</label>
+                            <select class="form-select" th:field="*{year}" th:classappend="${#fields.hasErrors('year')} ? 'is-invalid'">
+                                <option value="">Select year</option>
+                                <option th:each="y : ${#numbers.sequence(1, 4)}" th:value="${y}" th:text="'Year ' + ${y}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{year}"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="credits">Credits</label>
+                            <input class="form-control" type="number" min="1" max="10" th:field="*{credits}"
+                                   th:classappend="${#fields.hasErrors('credits')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{credits}"></div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="facultyId">Faculty</label>
+                            <select class="form-select" id="facultyId" name="facultyId">
+                                <option value="">Unassigned</option>
+                                <option th:each="f : ${facultyList}" th:value="${f.id}"
+                                        th:text="${f.name} + ' (' + ${f.department} + ')'"
+                                        th:selected="${f.id == selectedFacultyId}"></option>
+                            </select>
+                            <div class="form-text">Students of this department and year automatically take this course.</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-primary" type="submit">Save course</button>
+                        <a class="btn btn-ghost" th:href="@{/admin/courses}">Cancel</a>
+                    </div>
+                </form>
             </div>
-            <div class="mt-4 d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Save</button>
-                <a class="btn btn-outline-secondary" th:href="@{/admin/courses}">Cancel</a>
-            </div>
-        </form>
-    </div>
+
+        </div>
+    </main>
 </div>
-
 <th:block th:replace="~{fragments :: departments}"></th:block>
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>

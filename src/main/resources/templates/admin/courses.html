@@ -2,46 +2,56 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head('Courses')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Courses')}"></header>
+        <div class="content">
 
-<div class="container">
-    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-        <h1 class="h4 page-title">Courses</h1>
-        <a class="btn btn-primary" th:href="@{/admin/courses/new}"><i class="bi bi-plus-lg me-1"></i>Add course</a>
-    </div>
+            <div class="page-head">
+                <div>
+                    <h2 class="page-title">Courses</h2>
+                    <p class="page-sub" th:text="${#lists.size(courses)} + ' course(s)'"></p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/admin/courses/new}"><i class="bi bi-plus-lg me-1"></i>Add course</a>
+            </div>
 
-    <div th:if="${msg}" class="alert alert-success py-2" th:text="${msg}"></div>
+            <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Year</th><th>Credits</th><th>Faculty</th><th class="text-end">Actions</th></tr></thead>
-                <tbody>
-                <tr th:each="c : ${courses}">
-                    <td class="fw-semibold" th:text="${c.code}"></td>
-                    <td th:text="${c.name}"></td>
-                    <td th:text="${c.department}"></td>
-                    <td th:text="${c.year}"></td>
-                    <td th:text="${c.credits}"></td>
-                    <td>
-                        <span th:if="${c.faculty}" th:text="${c.faculty.name}"></span>
-                        <span th:unless="${c.faculty}" class="badge text-bg-secondary">Unassigned</span>
-                    </td>
-                    <td class="text-end text-nowrap">
-                        <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/courses/{id}/edit(id=${c.id})}"><i class="bi bi-pencil"></i></a>
-                        <form class="d-inline" th:action="@{/admin/courses/{id}/delete(id=${c.id})}" method="post"
-                              onsubmit="return confirm('Delete this course and all its attendance and marks?');">
-                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(courses)}"><td colspan="7" class="text-center text-muted py-4">No courses yet.</td></tr>
-                </tbody>
-            </table>
+            <div class="panel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Year</th><th class="num">Credits</th><th>Faculty</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${courses}">
+                            <td class="mono" th:text="${c.code}"></td>
+                            <td class="fw-semibold text-dark" th:text="${c.name}"></td>
+                            <td><span class="pill pill-tag" th:text="${c.department}"></span></td>
+                            <td th:text="${c.year}"></td>
+                            <td class="num" th:text="${c.credits}"></td>
+                            <td>
+                                <span th:if="${c.faculty}" th:text="${c.faculty.name}"></span>
+                                <span th:unless="${c.faculty}" class="pill pill-mute">Unassigned</span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn-icon" th:href="@{/admin/courses/{id}/edit(id=${c.id})}" title="Edit"
+                                   th:aria-label="'Edit ' + ${c.code}"><i class="bi bi-pencil"></i></a>
+                                <form class="d-inline" th:action="@{/admin/courses/{id}/delete(id=${c.id})}" method="post"
+                                      onsubmit="return confirm('Delete this course and all its attendance and marks?');">
+                                    <button class="btn-icon danger" type="submit" title="Delete" th:aria-label="'Delete ' + ${c.code}">
+                                        <i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(courses)}"><td colspan="7" class="empty">No courses yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 </div>
-
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>
 </html>

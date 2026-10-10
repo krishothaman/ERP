@@ -1,44 +1,86 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout :: head('My Attendance')}"></head>
+<head th:replace="~{layout :: head('Attendance Details')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Attendance Details')}"></header>
+        <div class="content">
 
-<div class="container" style="max-width: 960px;">
-    <h1 class="h4 page-title mb-1">My attendance</h1>
-    <p class="text-muted">A minimum of 75% is required in every course.</p>
+            <div class="page-head">
+                <div>
+                    <h2 class="page-title">Attendance details</h2>
+                    <p class="page-sub">A minimum of 75% total attendance is required in every course. OD/ML hours count toward the total.</p>
+                </div>
+            </div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead><tr><th>Code</th><th>Course</th><th class="text-center">Attended</th><th style="width: 30%;">Percentage</th><th>Status</th></tr></thead>
-                <tbody>
-                <tr th:each="r : ${rows}" th:classappend="${r.low()} ? 'table-danger'">
-                    <td class="fw-semibold" th:text="${r.course().code}"></td>
-                    <td th:text="${r.course().name}"></td>
-                    <td class="text-center" th:text="${r.present()} + ' / ' + ${r.total()}"></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="progress flex-grow-1" style="height: 8px;">
-                                <div class="progress-bar" th:classappend="${r.low()} ? 'bg-danger' : 'bg-success'"
-                                     th:style="'width: ' + ${r.percent()} + '%'"></div>
-                            </div>
-                            <span class="small fw-semibold" th:text="${r.percent()} + '%'"></span>
-                        </div>
-                    </td>
-                    <td>
-                        <span th:if="${r.total() == 0}" class="badge text-bg-secondary">No classes yet</span>
-                        <span th:if="${r.low()}" class="badge text-bg-danger">Below 75%</span>
-                        <span th:if="${r.total() > 0 and !r.low()}" class="badge text-bg-success">OK</span>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="text-center text-muted py-4">No courses for your department and year yet.</td></tr>
-                </tbody>
-            </table>
+            <div th:replace="~{student/charts :: attendanceCharts}"></div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Course-wise attendance</h2>
+                    <span class="panel-meta" th:if="${period}">
+                        During the period
+                        <strong th:text="${#temporals.format(period[0], 'dd MMM yyyy')}"></strong> to
+                        <strong th:text="${#temporals.format(period[1], 'dd MMM yyyy')}"></strong>
+                    </span>
+                    <span class="panel-meta" th:unless="${period}">During the period: no classes yet</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Code</th><th>Description</th>
+                            <th class="num">Max. hours</th><th class="num">Att. hours</th><th class="num">Absent hours</th>
+                            <th class="num">Average %</th><th class="num">OD/ML %</th><th style="min-width: 150px;">Total %</th><th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${rows}" th:classappend="${r.low()} ? 'row-low'">
+                            <td class="mono" th:text="${r.course().code}"></td>
+                            <td th:text="${r.course().name}"></td>
+                            <td class="num" th:text="${r.max()}"></td>
+                            <td class="num" th:text="${r.attended()}"></td>
+                            <td class="num" th:text="${r.absent()}"></td>
+                            <td class="num" th:text="${#numbers.formatDecimal(r.averagePct(), 1, 2)}"></td>
+                            <td class="num" th:text="${#numbers.formatDecimal(r.odPct(), 1, 2)}"></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="meter flex-grow-1" th:classappend="${r.low()} ? 'low'">
+                                        <span th:style="'width:' + ${r.totalPct()} + '%'"></span></div>
+                                    <strong class="small" th:classappend="${r.low()} ? 'text-low'"
+                                            th:text="${#numbers.formatDecimal(r.totalPct(), 1, 2)}"></strong>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${r.max() == 0}" class="pill pill-mute">No classes yet</span>
+                                <span th:if="${r.low()}" class="pill pill-low"><i class="bi bi-exclamation-triangle-fill"></i>Below 75%</span>
+                                <span th:if="${r.max() > 0 and !r.low()}" class="pill pill-ok"><i class="bi bi-check-lg"></i>Eligible</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="9" class="empty">No courses for your department and year yet.</td></tr>
+                        </tbody>
+                        <tfoot th:if="${totals.max() > 0}">
+                        <tr>
+                            <td colspan="2">Overall</td>
+                            <td class="num" th:text="${totals.max()}"></td>
+                            <td class="num" th:text="${totals.attended()}"></td>
+                            <td class="num" th:text="${totals.absent()}"></td>
+                            <td colspan="2"></td>
+                            <td th:classappend="${totals.low()} ? 'text-low'" th:text="${#numbers.formatDecimal(totals.totalPct(), 1, 2)} + '%'"></td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 </div>
-
 <th:block th:replace="~{layout :: scripts}"></th:block>
+<th:block th:replace="~{layout :: chartjs}"></th:block>
+<th:block th:replace="~{student/charts :: attendanceChartsScript}"></th:block>
 </body>
 </html>

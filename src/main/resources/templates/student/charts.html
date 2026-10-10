@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Course-wise attendance bar chart + hours donut.
+  Needs model attributes: rows (List<AttendanceService.Row>) and totals (AttendanceService.Totals).
+-->
+<div th:fragment="attendanceCharts" class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="panel h-100">
+            <div class="panel-head">
+                <h2 class="panel-title">Course-wise attendance (%)</h2>
+                <span class="panel-meta"><span class="legend"><span><span class="swatch" style="background:#202020"></span>75% and above</span>
+                    <span><span class="swatch" style="background:#c4231d"></span>Below 75%</span></span></span>
+            </div>
+            <div class="panel-body">
+                <div class="chart-box"><canvas id="attendanceChart" role="img"
+                                               aria-label="Bar chart of total attendance percentage for each course"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="panel h-100">
+            <div class="panel-head"><h2 class="panel-title">Attendance hours</h2></div>
+            <div class="panel-body">
+                <div class="chart-box" style="height: 200px;"><canvas id="hoursChart" role="img"
+                                                                      aria-label="Donut chart of hours present, absent and on OD or ML"></canvas></div>
+                <div class="legend justify-content-center mt-3">
+                    <span><span class="swatch" style="background:#2a78d6"></span>Present <strong th:text="${totals.attended()} + 'h'">0h</strong></span>
+                    <span><span class="swatch" style="background:#eb6834"></span>Absent <strong th:text="${totals.absent()} + 'h'">0h</strong></span>
+                    <span><span class="swatch" style="background:#1baf7a"></span>OD/ML <strong th:text="${totals.od()} + 'h'">0h</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="attendanceChartsScript">
+    <script th:inline="javascript">
+        (function () {
+            const codes = /*[[${rows.![course().code]}]]*/ [];
+            const names = /*[[${rows.![course().name]}]]*/ [];
+            const total = /*[[${rows.![totalPct()]}]]*/ [];
+            const attended = /*[[${rows.![attended() + od()]}]]*/ [];
+            const max = /*[[${rows.![max()]}]]*/ [];
+            const hours = [ /*[[${totals.attended()}]]*/ 0, /*[[${totals.absent()}]]*/ 0, /*[[${totals.od()}]]*/ 0 ];
+            const INK = '#202020', LOW = '#c4231d', MIN = 75;
+
+            // Dashed reference line at the 75% minimum
+            const minLine = {
+                id: 'minLine',
+                afterDatasetsDraw(chart) {
+                    const y = chart.scales.y.getPixelForValue(MIN), {left, right} = chart.chartArea, ctx = chart.ctx;
+                    ctx.save();
+                    ctx.strokeStyle = LOW;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = LOW;
+                    ctx.font = '11px ' + Chart.defaults.font.family;
+                    ctx.textAlign = 'right';
+                    ctx.fillText('75% minimum', right, y - 5);
+                    ctx.restore();
+                }
+            };
+
+            new Chart(document.getElementById('attendanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: codes,
+                    datasets: [{
+                        data: total,
+                        backgroundColor: total.map((v, i) => max[i] > 0 && v < MIN ? LOW : INK),
+                        borderRadius: {topLeft: 4, topRight: 4},
+                        borderSkipped: 'bottom',
+                        maxBarThickness: 34
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {min: 0, max: 100, ticks: {stepSize: 25, callback: v => v + '%'},
+                            grid: {color: 'rgba(32,32,32,0.08)'}, border: {display: false}},
+                        x: {grid: {display: false}, ticks: {font: {family: 'JetBrains Mono', size: 11}}}
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: items => codes[items[0].dataIndex] + ' · ' + names[items[0].dataIndex],
+                                label: item => 'Total ' + item.raw + '%  (' + attended[item.dataIndex] + ' of ' + max[item.dataIndex] + ' h)'
+                            }
+                        }
+                    }
+                },
+                plugins: [minLine]
+            });
+
+            new Chart(document.getElementById('hoursChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present', 'Absent', 'OD/ML'],
+                    datasets: [{data: hours, backgroundColor: ['#2a78d6', '#eb6834', '#1baf7a'],
+                        borderColor: '#ffffff', borderWidth: 2, hoverOffset: 4}]
+                },
+                options: {
+                    cutout: '68%',
+                    plugins: {tooltip: {callbacks: {label: item => ' ' + item.label + ': ' + item.raw + ' h'}}}
+                }
+            });
+        })();
+    </script>
+</th:block>
+
+</body>
+</html>

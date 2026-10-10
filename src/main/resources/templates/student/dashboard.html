@@ -1,44 +1,103 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{layout :: head('My Profile')}"></head>
+<head th:replace="~{layout :: head('Dashboard')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Dashboard')}"></header>
+        <div class="content">
 
-<div class="container" style="max-width: 960px;">
-    <h1 class="h4 page-title mb-4">Welcome, <span th:text="${student.name}">Student</span></h1>
-
-    <div class="row g-3">
-        <div class="col-lg-7">
-            <div class="card p-4 h-100">
-                <h2 class="h6 fw-semibold mb-3"><i class="bi bi-person-vcard me-2"></i>My details</h2>
-                <dl class="row mb-0">
-                    <dt class="col-sm-4 text-muted fw-normal">Roll number</dt><dd class="col-sm-8 fw-semibold" th:text="${student.rollNo}"></dd>
-                    <dt class="col-sm-4 text-muted fw-normal">Name</dt><dd class="col-sm-8" th:text="${student.name}"></dd>
-                    <dt class="col-sm-4 text-muted fw-normal">Department</dt><dd class="col-sm-8" th:text="${student.department}"></dd>
-                    <dt class="col-sm-4 text-muted fw-normal">Year</dt><dd class="col-sm-8" th:text="${student.year}"></dd>
-                    <dt class="col-sm-4 text-muted fw-normal">Email</dt><dd class="col-sm-8" th:text="${student.email} ?: '-'"></dd>
-                    <dt class="col-sm-4 text-muted fw-normal">Phone</dt><dd class="col-sm-8 mb-0" th:text="${student.phone} ?: '-'"></dd>
-                </dl>
+            <div class="page-head">
+                <div>
+                    <h2 class="page-title">Welcome back, <span th:text="${#strings.arraySplit(student.name, ' ')[0]}">Student</span></h2>
+                    <p class="page-sub">
+                        <span th:text="${student.department} + ' · Year ' + ${student.year}"></span> ·
+                        <span class="mono" th:text="${student.rollNo}"></span>
+                    </p>
+                </div>
+                <a class="btn btn-outline" th:href="@{/student/attendance}"><i class="bi bi-calendar2-check me-1"></i>Attendance details</a>
             </div>
-        </div>
-        <div class="col-lg-5 d-flex flex-column gap-3">
-            <a th:href="@{/student/attendance}" class="text-decoration-none">
-                <div class="card stat-card p-4">
-                    <div class="text-muted small">Overall attendance</div>
-                    <div class="stat-value" th:classappend="${hasClasses and overallAttendance < 75} ? 'text-danger' : 'text-success'"
-                         th:text="${hasClasses} ? ${overallAttendance} + '%' : '-'">0%</div>
-                </div>
-            </a>
-            <a th:href="@{/student/marks}" class="text-decoration-none">
-                <div class="card stat-card p-4">
-                    <div class="text-muted small">Courses this year</div>
-                    <div class="stat-value text-primary" th:text="${courseCount}">0</div>
-                </div>
-            </a>
-        </div>
-    </div>
-</div>
 
+            <div class="alert alert-danger d-flex gap-2 align-items-center" th:if="${totals.low()}">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Your overall attendance is below 75%. Please attend upcoming classes regularly.</span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6 col-xl-3">
+                    <a class="stat" th:href="@{/student/attendance}">
+                        <div>
+                            <div class="stat-label">Overall attendance</div>
+                            <div class="stat-value" th:classappend="${totals.low()} ? 'text-low'"
+                                 th:text="${totals.max() > 0} ? ${totals.totalPct()} + '%' : '-'">0%</div>
+                            <div class="stat-note" th:text="${totals.attended() + totals.od()} + ' of ' + ${totals.max()} + ' hours'"></div>
+                        </div>
+                        <span class="stat-icon"><i class="bi bi-calendar2-check"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="stat" th:href="@{/student/courses}">
+                        <div>
+                            <div class="stat-label">Courses this semester</div>
+                            <div class="stat-value" th:text="${#lists.size(rows)}">0</div>
+                            <div class="stat-note" th:text="${student.department} + ' · Year ' + ${student.year}"></div>
+                        </div>
+                        <span class="stat-icon"><i class="bi bi-journal-bookmark"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="stat" th:href="@{/student/marks}">
+                        <div>
+                            <div class="stat-label">Total credits</div>
+                            <div class="stat-value" th:text="${credits}">0</div>
+                            <div class="stat-note">Registered this semester</div>
+                        </div>
+                        <span class="stat-icon"><i class="bi bi-stack"></i></span>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="stat" th:href="@{/student/marks}">
+                        <div>
+                            <div class="stat-label">Current GPA</div>
+                            <div class="stat-value" th:text="${gpa > 0} ? ${#numbers.formatDecimal(gpa, 1, 2)} : '-'">0</div>
+                            <div class="stat-note">On a 10-point scale</div>
+                        </div>
+                        <span class="stat-icon"><i class="bi bi-award"></i></span>
+                    </a>
+                </div>
+            </div>
+
+            <div th:replace="~{student/charts :: attendanceCharts}"></div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Marks summary</h2>
+                    <a class="small" th:href="@{/student/marks}">View all &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Code</th><th>Course</th><th class="num">Marks</th><th class="text-center">Grade</th></tr></thead>
+                        <tbody>
+                        <tr th:each="m : ${marks}">
+                            <td class="mono" th:text="${m.course().code}"></td>
+                            <td th:text="${m.course().name}"></td>
+                            <td class="num" th:text="${m.marks()} != null ? ${m.marks()} : '-'"></td>
+                            <td class="text-center">
+                                <span th:if="${m.grade()}" class="grade" th:classappend="${m.grade() == 'F'} ? 'grade-f'" th:text="${m.grade()}"></span>
+                                <span th:unless="${m.grade()}" class="pill pill-mute">Not graded yet</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
 <th:block th:replace="~{layout :: scripts}"></th:block>
+<th:block th:replace="~{layout :: chartjs}"></th:block>
+<th:block th:replace="~{student/charts :: attendanceChartsScript}"></th:block>
 </body>
 </html>

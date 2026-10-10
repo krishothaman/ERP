@@ -2,59 +2,67 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${student.id} == null ? 'Add Student' : 'Edit Student')}"></head>
 <body>
-<nav th:replace="~{layout :: navbar}"></nav>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar(${student.id} == null ? 'Add Student' : 'Edit Student')}"></header>
+        <div class="content" style="max-width: 820px;">
 
-<div class="container" style="max-width: 720px;">
-    <div class="card p-4">
-        <h1 class="h5 mb-3" th:text="${student.id} == null ? 'Add student' : 'Edit student'">Student</h1>
+            <a class="small text-decoration-none" th:href="@{/admin/students}"><i class="bi bi-arrow-left"></i> Students</a>
+            <div class="page-head mt-2">
+                <h2 class="page-title" th:text="${student.id} == null ? 'Add student' : 'Edit student'">Student</h2>
+            </div>
 
-        <form th:action="@{/admin/students/save}" th:object="${student}" method="post" novalidate>
-            <input type="hidden" th:field="*{id}">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label" for="rollNo">Roll number</label>
-                    <input class="form-control" th:field="*{rollNo}" th:readonly="${student.id != null}"
-                           th:classappend="${#fields.hasErrors('rollNo')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{rollNo}"></div>
-                    <div class="form-text" th:if="${student.id == null}">Also used as the student's username and first password.</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="name">Full name</label>
-                    <input class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{name}"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="department">Department</label>
-                    <input class="form-control" th:field="*{department}" list="departments"
-                           th:classappend="${#fields.hasErrors('department')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{department}"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="year">Year</label>
-                    <select class="form-select" th:field="*{year}" th:classappend="${#fields.hasErrors('year')} ? 'is-invalid'">
-                        <option value="">Select year</option>
-                        <option th:each="y : ${#numbers.sequence(1, 4)}" th:value="${y}" th:text="'Year ' + ${y}"></option>
-                    </select>
-                    <div class="invalid-feedback" th:errors="*{year}"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="email">Email</label>
-                    <input class="form-control" th:field="*{email}" type="email" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{email}"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="phone">Phone</label>
-                    <input class="form-control" th:field="*{phone}">
-                </div>
+            <div class="panel panel-body">
+                <form th:action="@{/admin/students/save}" th:object="${student}" method="post" novalidate>
+                    <input type="hidden" th:field="*{id}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="rollNo">Roll number</label>
+                            <input class="form-control mono" th:field="*{rollNo}" th:readonly="${student.id != null}"
+                                   th:classappend="${#fields.hasErrors('rollNo')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{rollNo}"></div>
+                            <div class="form-text" th:if="${student.id == null}">Also the student's username and first password.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="name">Full name</label>
+                            <input class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="department">Department</label>
+                            <input class="form-control" th:field="*{department}" list="departments"
+                                   th:classappend="${#fields.hasErrors('department')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{department}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="year">Year</label>
+                            <select class="form-select" th:field="*{year}" th:classappend="${#fields.hasErrors('year')} ? 'is-invalid'">
+                                <option value="">Select year</option>
+                                <option th:each="y : ${#numbers.sequence(1, 4)}" th:value="${y}" th:text="'Year ' + ${y}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{year}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control" th:field="*{email}" type="email" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{email}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="phone">Phone</label>
+                            <input class="form-control" th:field="*{phone}">
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-primary" type="submit">Save student</button>
+                        <a class="btn btn-ghost" th:href="@{/admin/students}">Cancel</a>
+                    </div>
+                </form>
             </div>
-            <div class="mt-4 d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Save</button>
-                <a class="btn btn-outline-secondary" th:href="@{/admin/students}">Cancel</a>
-            </div>
-        </form>
-    </div>
+
+        </div>
+    </main>
 </div>
-
 <th:block th:replace="~{fragments :: departments}"></th:block>
 <th:block th:replace="~{layout :: scripts}"></th:block>
 </body>

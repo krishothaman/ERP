@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Personal Details')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{layout :: sidebar}"></aside>
+    <main class="main">
+        <header th:replace="~{layout :: topbar('Personal Details')}"></header>
+        <div class="content" style="max-width: 960px;">
+
+            <div class="page-head">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar" style="width:64px;height:64px;font-size:1.5rem;"
+                         th:text="${#strings.substring(student.name, 0, 1)}">S</div>
+                    <div>
+                        <h2 class="page-title" th:text="${student.name}">Student</h2>
+                        <p class="page-sub mono" th:text="${student.rollNo}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <div class="panel h-100">
+                        <div class="panel-head"><h3 class="panel-title">Personal information</h3></div>
+                        <div class="panel-body">
+                            <dl class="detail-list">
+                                <dt>Full name</dt><dd th:text="${student.name}"></dd>
+                                <dt>Email</dt><dd th:text="${student.email} ?: '-'"></dd>
+                                <dt>Phone</dt><dd th:text="${student.phone} ?: '-'"></dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="panel h-100">
+                        <div class="panel-head"><h3 class="panel-title">Academic information</h3></div>
+                        <div class="panel-body">
+                            <dl class="detail-list" style="grid-template-columns: 120px 1fr;">
+                                <dt>Roll number</dt><dd class="mono" th:text="${student.rollNo}"></dd>
+                                <dt>Department</dt><dd th:text="${student.department}"></dd>
+                                <dt>Year</dt><dd th:text="'Year ' + ${student.year}"></dd>
+                                <dt>Login ID</dt><dd class="mono" th:text="${student.user != null ? student.user.username : '-'}"></dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="small text-muted mt-3"><i class="bi bi-info-circle me-1"></i>To correct your details, contact the college office (admin).</p>
+
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>
