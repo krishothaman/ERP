@@ -1,0 +1,43 @@
+body {
+    background: #f4f6fb;
+    min-height: 100vh;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+}
+
+.stat-card .stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-card .stat-icon {
+    font-size: 2.25rem;
+    opacity: 0.25;
+}
+
+.table th {
+    font-weight: 600;
+    color: #475467;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.login-page {
+    background: linear-gradient(135deg, #0d6efd 0%, #4f46e5 100%);
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+}
+
+.page-title {
+    font-weight: 600;
+    margin-bottom: 0;
+}

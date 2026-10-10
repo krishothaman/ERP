@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Login')}"></head>
+<body class="login-page d-flex align-items-center justify-content-center p-3">
+
+<div class="card login-card p-4">
+    <div class="text-center mb-4">
+        <i class="bi bi-mortarboard-fill text-primary" style="font-size: 3rem;"></i>
+        <h1 class="h4 mt-2 mb-0">College ERP Portal</h1>
+        <p class="text-muted small">Sign in to continue</p>
+    </div>
+
+    <div th:if="${param.error}" class="alert alert-danger py-2">Invalid username or password.</div>
+    <div th:if="${param.logout}" class="alert alert-success py-2">You have been logged out.</div>
+
+    <form th:action="@{/login}" method="post">
+        <div class="mb-3">
+            <label class="form-label" for="username">Username</label>
+            <input class="form-control" id="username" name="username" required autofocus
+                   placeholder="Roll no, email or admin">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Sign in</button>
+    </form>
+
+    <div class="mt-4 small text-muted border-top pt-3">
+        <div class="fw-semibold mb-1">Demo logins</div>
+        <div>Admin: <code>admin</code> / <code>admin123</code></div>
+        <div>Faculty: <code>ravi@college.edu</code> / same as username</div>
+        <div>Student: <code>CSE2001</code> / <code>CSE2001</code></div>
+    </div>
+</div>
+
+</body>
+</html>
