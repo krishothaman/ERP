@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My Attendance')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container" style="max-width: 960px;">
+    <h1 class="h4 page-title mb-1">My attendance</h1>
+    <p class="text-muted">A minimum of 75% is required in every course.</p>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Code</th><th>Course</th><th class="text-center">Attended</th><th style="width: 30%;">Percentage</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${rows}" th:classappend="${r.low()} ? 'table-danger'">
+                    <td class="fw-semibold" th:text="${r.course().code}"></td>
+                    <td th:text="${r.course().name}"></td>
+                    <td class="text-center" th:text="${r.present()} + ' / ' + ${r.total()}"></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar" th:classappend="${r.low()} ? 'bg-danger' : 'bg-success'"
+                                     th:style="'width: ' + ${r.percent()} + '%'"></div>
+                            </div>
+                            <span class="small fw-semibold" th:text="${r.percent()} + '%'"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:if="${r.total() == 0}" class="badge text-bg-secondary">No classes yet</span>
+                        <span th:if="${r.low()}" class="badge text-bg-danger">Below 75%</span>
+                        <span th:if="${r.total() > 0 and !r.low()}" class="badge text-bg-success">OK</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="text-center text-muted py-4">No courses for your department and year yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>

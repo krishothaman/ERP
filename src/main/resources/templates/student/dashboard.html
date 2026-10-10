@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My Profile')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container" style="max-width: 960px;">
+    <h1 class="h4 page-title mb-4">Welcome, <span th:text="${student.name}">Student</span></h1>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card p-4 h-100">
+                <h2 class="h6 fw-semibold mb-3"><i class="bi bi-person-vcard me-2"></i>My details</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal">Roll number</dt><dd class="col-sm-8 fw-semibold" th:text="${student.rollNo}"></dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Name</dt><dd class="col-sm-8" th:text="${student.name}"></dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Department</dt><dd class="col-sm-8" th:text="${student.department}"></dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Year</dt><dd class="col-sm-8" th:text="${student.year}"></dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Email</dt><dd class="col-sm-8" th:text="${student.email} ?: '-'"></dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Phone</dt><dd class="col-sm-8 mb-0" th:text="${student.phone} ?: '-'"></dd>
+                </dl>
+            </div>
+        </div>
+        <div class="col-lg-5 d-flex flex-column gap-3">
+            <a th:href="@{/student/attendance}" class="text-decoration-none">
+                <div class="card stat-card p-4">
+                    <div class="text-muted small">Overall attendance</div>
+                    <div class="stat-value" th:classappend="${hasClasses and overallAttendance < 75} ? 'text-danger' : 'text-success'"
+                         th:text="${hasClasses} ? ${overallAttendance} + '%' : '-'">0%</div>
+                </div>
+            </a>
+            <a th:href="@{/student/marks}" class="text-decoration-none">
+                <div class="card stat-card p-4">
+                    <div class="text-muted small">Courses this year</div>
+                    <div class="stat-value text-primary" th:text="${courseCount}">0</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>

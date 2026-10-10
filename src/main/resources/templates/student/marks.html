@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('My Marks')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container" style="max-width: 960px;">
+    <h1 class="h4 page-title mb-1">My marks</h1>
+    <p class="text-muted">Grades: O &ge; 90, A+ &ge; 80, A &ge; 70, B+ &ge; 60, B &ge; 50, C &ge; 40, F &lt; 40</p>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Code</th><th>Course</th><th class="text-center">Credits</th><th class="text-center">Marks</th><th class="text-center">Grade</th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${rows}">
+                    <td class="fw-semibold" th:text="${r.course().code}"></td>
+                    <td th:text="${r.course().name}"></td>
+                    <td class="text-center" th:text="${r.course().credits}"></td>
+                    <td class="text-center" th:text="${r.marks()} != null ? ${r.marks()} + ' / 100' : '-'"></td>
+                    <td class="text-center">
+                        <span th:if="${r.grade()}" class="badge fs-6"
+                              th:classappend="${r.grade() == 'F'} ? 'text-bg-danger' : 'text-bg-success'"
+                              th:text="${r.grade()}"></span>
+                        <span th:unless="${r.grade()}" class="text-muted small">Not graded yet</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="text-center text-muted py-4">No courses for your department and year yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>
