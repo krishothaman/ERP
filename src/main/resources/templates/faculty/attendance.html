@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Attendance')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container" style="max-width: 860px;">
+    <a class="small text-decoration-none" th:href="@{/faculty}"><i class="bi bi-arrow-left"></i> My courses</a>
+    <h1 class="h4 page-title mt-2">Attendance &middot; <span th:text="${course.code} + ' ' + ${course.name}"></span></h1>
+    <p class="text-muted" th:text="${course.department} + ' / Year ' + ${course.year}"></p>
+
+    <div th:if="${msg}" class="alert alert-success py-2" th:text="${msg}"></div>
+
+    <!-- Pick a date: reloads the page with that day's attendance -->
+    <form class="card p-3 mb-3 d-flex flex-row flex-wrap gap-2 align-items-end" th:action="@{/faculty/attendance}" method="get">
+        <input type="hidden" name="courseId" th:value="${course.id}">
+        <div>
+            <label class="form-label small mb-1" for="pickDate">Date</label>
+            <input class="form-control" type="date" id="pickDate" name="date" th:value="${date}">
+        </div>
+        <button class="btn btn-outline-primary" type="submit">Load</button>
+        <span class="ms-auto small" th:classappend="${alreadyTaken} ? 'text-success' : 'text-muted'"
+              th:text="${alreadyTaken} ? 'Attendance already taken. Editing it.' : 'Not taken yet. Everyone is marked present by default.'"></span>
+    </form>
+
+    <form th:action="@{/faculty/attendance}" method="post">
+        <input type="hidden" name="courseId" th:value="${course.id}">
+        <input type="hidden" name="date" th:value="${date}">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Roll No</th><th>Name</th>
+                        <th class="text-center">
+                            Present
+                            <input class="form-check-input ms-1" type="checkbox" id="toggleAll" checked
+                                   title="Tick or untick everyone">
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="s : ${students}">
+                        <td class="fw-semibold" th:text="${s.rollNo}"></td>
+                        <td th:text="${s.name}"></td>
+                        <td class="text-center">
+                            <input class="form-check-input present-box" type="checkbox" name="present" th:value="${s.id}"
+                                   th:checked="${alreadyTaken} ? ${present[s.id] == true} : true">
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(students)}">
+                        <td colspan="3" class="text-center text-muted py-4">No students in this department and year.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn btn-primary mt-3" type="submit" th:disabled="${#lists.isEmpty(students)}">
+            <i class="bi bi-check2-circle me-1"></i>Save attendance</button>
+    </form>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+<script>
+    document.getElementById('toggleAll').addEventListener('change', function () {
+        document.querySelectorAll('.present-box').forEach(box => box.checked = this.checked);
+    });
+</script>
+</body>
+</html>
