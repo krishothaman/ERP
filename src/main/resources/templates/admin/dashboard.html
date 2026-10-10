@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Admin Dashboard')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container">
+    <h1 class="h4 page-title mb-4">Admin Dashboard</h1>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <a th:href="@{/admin/students}" class="text-decoration-none">
+                <div class="card stat-card p-4 d-flex flex-row justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Students</div>
+                        <div class="stat-value text-primary" th:text="${studentCount}">0</div>
+                    </div>
+                    <i class="bi bi-people-fill stat-icon text-primary"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a th:href="@{/admin/faculty}" class="text-decoration-none">
+                <div class="card stat-card p-4 d-flex flex-row justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Faculty</div>
+                        <div class="stat-value text-success" th:text="${facultyCount}">0</div>
+                    </div>
+                    <i class="bi bi-person-workspace stat-icon text-success"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a th:href="@{/admin/courses}" class="text-decoration-none">
+                <div class="card stat-card p-4 d-flex flex-row justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Courses</div>
+                        <div class="stat-value text-warning" th:text="${courseCount}">0</div>
+                    </div>
+                    <i class="bi bi-journal-bookmark-fill stat-icon text-warning"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-white fw-semibold">Courses and assigned faculty</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Code</th><th>Course</th><th>Dept / Year</th><th>Faculty</th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${courses}">
+                    <td th:text="${c.code}"></td>
+                    <td th:text="${c.name}"></td>
+                    <td th:text="${c.department} + ' / Year ' + ${c.year}"></td>
+                    <td>
+                        <span th:if="${c.faculty}" th:text="${c.faculty.name}"></span>
+                        <span th:unless="${c.faculty}" class="badge text-bg-secondary">Unassigned</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(courses)}"><td colspan="4" class="text-center text-muted py-4">No courses yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>

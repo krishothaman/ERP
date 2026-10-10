@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Students')}"></head>
+<body>
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        <h1 class="h4 page-title">Students</h1>
+        <a class="btn btn-primary" th:href="@{/admin/students/new}"><i class="bi bi-plus-lg me-1"></i>Add student</a>
+    </div>
+
+    <div th:if="${msg}" class="alert alert-success py-2" th:text="${msg}"></div>
+
+    <form class="mb-3" th:action="@{/admin/students}" method="get">
+        <div class="input-group">
+            <input class="form-control" name="q" th:value="${q}" placeholder="Search by name, roll no or department">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+            <a th:if="${q}" class="btn btn-outline-secondary" th:href="@{/admin/students}">Clear</a>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr><th>Roll No</th><th>Name</th><th>Department</th><th>Year</th><th>Email</th><th>Phone</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${students}">
+                    <td class="fw-semibold" th:text="${s.rollNo}"></td>
+                    <td th:text="${s.name}"></td>
+                    <td th:text="${s.department}"></td>
+                    <td th:text="${s.year}"></td>
+                    <td th:text="${s.email}"></td>
+                    <td th:text="${s.phone}"></td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/students/{id}/edit(id=${s.id})}"><i class="bi bi-pencil"></i></a>
+                        <form class="d-inline" th:action="@{/admin/students/{id}/delete(id=${s.id})}" method="post"
+                              onsubmit="return confirm('Delete this student and all their attendance and marks?');">
+                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(students)}"><td colspan="7" class="text-center text-muted py-4">No students found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<th:block th:replace="~{layout :: scripts}"></th:block>
+</body>
+</html>
