@@ -16,9 +16,22 @@ public final class GradeUtil {
         return "F";
     }
 
+    /** 10-point scale used for the GPA. */
+    public static int gradePoint(String grade) {
+        return switch (grade) {
+            case "O" -> 10;
+            case "A+" -> 9;
+            case "A" -> 8;
+            case "B+" -> 7;
+            case "B" -> 6;
+            case "C" -> 5;
+            default -> 0;
+        };
+    }
+
     /** Percentage rounded to one decimal place; 0 when there are no classes yet. */
-    public static double percent(long present, long total) {
+    public static double percent(long part, long total) {
         if (total == 0) return 0.0;
-        return Math.round(present * 1000.0 / total) / 10.0;
+        return Math.round(part * 1000.0 / total) / 10.0;
     }
 }

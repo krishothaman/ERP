@@ -1,5 +1,7 @@
 package com.college.erp;
 
+import com.college.erp.entity.Attendance;
+import com.college.erp.entity.AttendanceStatus;
 import com.college.erp.entity.Course;
 import com.college.erp.entity.Student;
 import com.college.erp.repository.AttendanceRepository;
@@ -14,6 +16,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,27 +51,50 @@ class FacultyFlowTest {
 
     @Test
     @WithUserDetails("ravi@college.edu")
-    void savingAttendanceRecordsPresentAndAbsent() throws Exception {
+    void savingAttendanceRecordsHoursAndStatuses() throws Exception {
         Course c = courses.findByCode("CS201").orElseThrow();
-        Student first = students.findByDepartmentAndYearOrderByRollNo("CSE", 2).get(0);
-        Student second = students.findByDepartmentAndYearOrderByRollNo("CSE", 2).get(1);
+        List<Student> cls = students.findByDepartmentAndYearOrderByRollNo("CSE", 2);
+        Student first = cls.get(0), second = cls.get(1), third = cls.get(2);
         LocalDate day = LocalDate.of(2030, 1, 1);
 
         mvc.perform(post("/faculty/attendance").with(csrf())
-                        .param("courseId", c.getId().toString()).param("date", day.toString())
-                        .param("present", first.getId().toString()))
+                        .param("courseId", c.getId().toString()).param("date", day.toString()).param("hours", "2")
+                        .param("s_" + first.getId(), "PRESENT")
+                        .param("s_" + second.getId(), "ABSENT")
+                        .param("s_" + third.getId(), "OD"))
                 .andExpect(status().is3xxRedirection());
 
-        assertTrue(attendance.findByStudentAndCourseAndDate(first, c, day).orElseThrow().isPresent());
-        assertFalse(attendance.findByStudentAndCourseAndDate(second, c, day).orElseThrow().isPresent());
+        Attendance a1 = attendance.findByStudentAndCourseAndDate(first, c, day).orElseThrow();
+        assertEquals(AttendanceStatus.PRESENT, a1.getStatus());
+        assertEquals(2, a1.getHours());
+        assertEquals(AttendanceStatus.ABSENT, attendance.findByStudentAndCourseAndDate(second, c, day).orElseThrow().getStatus());
+        assertEquals(AttendanceStatus.OD, attendance.findByStudentAndCourseAndDate(third, c, day).orElseThrow().getStatus());
+        // students not sent default to present
+        assertEquals(AttendanceStatus.PRESENT, attendance.findByStudentAndCourseAndDate(cls.get(3), c, day).orElseThrow().getStatus());
 
         // Saving the same day again updates instead of duplicating
         long count = attendance.count();
         mvc.perform(post("/faculty/attendance").with(csrf())
-                .param("courseId", c.getId().toString()).param("date", day.toString())
-                .param("present", second.getId().toString()));
+                .param("courseId", c.getId().toString()).param("date", day.toString()).param("hours", "1")
+                .param("s_" + second.getId(), "PRESENT"));
         assertEquals(count, attendance.count());
-        assertTrue(attendance.findByStudentAndCourseAndDate(second, c, day).orElseThrow().isPresent());
+        Attendance updated = attendance.findByStudentAndCourseAndDate(second, c, day).orElseThrow();
+        assertEquals(AttendanceStatus.PRESENT, updated.getStatus());
+        assertEquals(1, updated.getHours());
+    }
+
+    @Test
+    @WithUserDetails("ravi@college.edu")
+    void invalidHoursOrStatusIsRejected() throws Exception {
+        Course c = courses.findByCode("CS201").orElseThrow();
+        Student first = students.findByDepartmentAndYearOrderByRollNo("CSE", 2).get(0);
+        mvc.perform(post("/faculty/attendance").with(csrf())
+                        .param("courseId", c.getId().toString()).param("date", "2030-02-01").param("hours", "5"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/faculty/attendance").with(csrf())
+                        .param("courseId", c.getId().toString()).param("date", "2030-02-01")
+                        .param("s_" + first.getId(), "SLEEPING"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

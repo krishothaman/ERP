@@ -7,6 +7,7 @@ import com.college.erp.repository.CourseRepository;
 import com.college.erp.repository.FacultyRepository;
 import com.college.erp.repository.StudentRepository;
 import com.college.erp.service.AdminService;
+import com.college.erp.service.DashboardService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +15,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -23,13 +26,16 @@ public class AdminController {
     private final FacultyRepository facultyRepository;
     private final CourseRepository courseRepository;
     private final AdminService adminService;
+    private final DashboardService dashboardService;
 
     public AdminController(StudentRepository studentRepository, FacultyRepository facultyRepository,
-                           CourseRepository courseRepository, AdminService adminService) {
+                           CourseRepository courseRepository, AdminService adminService,
+                           DashboardService dashboardService) {
         this.studentRepository = studentRepository;
         this.facultyRepository = facultyRepository;
         this.courseRepository = courseRepository;
         this.adminService = adminService;
+        this.dashboardService = dashboardService;
     }
 
     /** Never let a form submission set the linked login account or faculty object directly. */
@@ -40,9 +46,14 @@ public class AdminController {
 
     @GetMapping
     public String dashboard(Model model) {
+        Map<String, Long> perDepartment = dashboardService.studentsPerDepartment();
         model.addAttribute("studentCount", studentRepository.count());
         model.addAttribute("facultyCount", facultyRepository.count());
         model.addAttribute("courseCount", courseRepository.count());
+        model.addAttribute("departmentCount", perDepartment.size());
+        model.addAttribute("deptLabels", perDepartment.keySet());
+        model.addAttribute("deptCounts", perDepartment.values());
+        model.addAttribute("lowAttendance", dashboardService.lowAttendance());
         model.addAttribute("courses", courseRepository.findAllByOrderByCode());
         return "admin/dashboard";
     }

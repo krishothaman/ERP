@@ -1,11 +1,13 @@
 package com.college.erp.controller;
 
+import com.college.erp.entity.AttendanceStatus;
 import com.college.erp.entity.Course;
 import com.college.erp.entity.Faculty;
 import com.college.erp.entity.Student;
 import com.college.erp.repository.CourseRepository;
 import com.college.erp.service.AttendanceService;
 import com.college.erp.service.CurrentUser;
+import com.college.erp.service.DashboardService;
 import com.college.erp.service.MarkService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,26 +29,26 @@ public class FacultyController {
     private final AttendanceService attendanceService;
     private final MarkService markService;
     private final CurrentUser currentUser;
+    private final DashboardService dashboardService;
 
     public FacultyController(CourseRepository courseRepository, AttendanceService attendanceService,
-                             MarkService markService, CurrentUser currentUser) {
+                             MarkService markService, CurrentUser currentUser, DashboardService dashboardService) {
         this.courseRepository = courseRepository;
         this.attendanceService = attendanceService;
         this.markService = markService;
         this.currentUser = currentUser;
+        this.dashboardService = dashboardService;
     }
 
     @GetMapping
     public String dashboard(Principal principal, Model model) {
         Faculty me = currentUser.faculty(principal);
-        List<Course> courses = courseRepository.findByFacultyOrderByCode(me);
-        Map<Long, Integer> studentCounts = new HashMap<>();
-        for (Course c : courses) {
-            studentCounts.put(c.getId(), attendanceService.studentsOf(c).size());
-        }
+        List<DashboardService.CourseStats> stats = courseRepository.findByFacultyOrderByCode(me).stream()
+                .map(dashboardService::courseStats).toList();
         model.addAttribute("faculty", me);
-        model.addAttribute("courses", courses);
-        model.addAttribute("studentCounts", studentCounts);
+        model.addAttribute("stats", stats);
+        model.addAttribute("totalStudents", stats.stream().mapToInt(DashboardService.CourseStats::students).sum());
+        model.addAttribute("totalLow", stats.stream().mapToLong(DashboardService.CourseStats::lowCount).sum());
         return "faculty/dashboard";
     }
 
@@ -58,24 +60,40 @@ public class FacultyController {
                                  Principal principal, Model model) {
         Course course = myCourse(courseId, principal);
         LocalDate day = date != null ? date : LocalDate.now();
-        Map<Long, Boolean> present = attendanceService.presentMap(course, day);
+        Map<Long, AttendanceStatus> statuses = attendanceService.statusMap(course, day);
 
         model.addAttribute("course", course);
         model.addAttribute("date", day);
+        model.addAttribute("hours", attendanceService.hoursOf(course, day));
         model.addAttribute("students", attendanceService.studentsOf(course));
-        model.addAttribute("present", present);
-        model.addAttribute("alreadyTaken", !present.isEmpty());
+        model.addAttribute("statuses", statuses);
+        model.addAttribute("alreadyTaken", !statuses.isEmpty());
         return "faculty/attendance";
     }
 
+    /** Statuses arrive as s_{studentId}=PRESENT|ABSENT|OD; hours is the session length (1-3). */
     @PostMapping("/attendance")
     public String saveAttendance(@RequestParam Long courseId,
                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                                 @RequestParam(name = "present", required = false) List<Long> presentIds,
+                                 @RequestParam(defaultValue = "1") int hours,
+                                 @RequestParam Map<String, String> params,
                                  Principal principal, RedirectAttributes redirect) {
         Course course = myCourse(courseId, principal);
-        attendanceService.save(course, date, presentIds == null ? Set.of() : new HashSet<>(presentIds));
-        redirect.addFlashAttribute("msg", "Attendance saved for " + date + ".");
+        if (hours < 1 || hours > 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hours must be 1 to 3");
+        }
+        Map<Long, AttendanceStatus> statuses = new HashMap<>();
+        for (Student s : attendanceService.studentsOf(course)) {
+            String value = params.get("s_" + s.getId());
+            if (value == null) continue;
+            try {
+                statuses.put(s.getId(), AttendanceStatus.valueOf(value));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown status " + value);
+            }
+        }
+        attendanceService.save(course, date, hours, statuses);
+        redirect.addFlashAttribute("msg", "Attendance saved for " + date + " (" + hours + " hour" + (hours > 1 ? "s" : "") + ").");
         return "redirect:/faculty/attendance?courseId=" + courseId + "&date=" + date;
     }
 

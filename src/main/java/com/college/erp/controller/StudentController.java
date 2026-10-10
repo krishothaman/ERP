@@ -3,7 +3,6 @@ package com.college.erp.controller;
 import com.college.erp.entity.Student;
 import com.college.erp.service.AttendanceService;
 import com.college.erp.service.CurrentUser;
-import com.college.erp.service.GradeUtil;
 import com.college.erp.service.MarkService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,28 +28,50 @@ public class StudentController {
     }
 
     @GetMapping
-    public String profile(Principal principal, Model model) {
+    public String dashboard(Principal principal, Model model) {
         Student me = currentUser.student(principal);
         List<AttendanceService.Row> attendance = attendanceService.summary(me);
-        long present = attendance.stream().mapToLong(AttendanceService.Row::present).sum();
-        long total = attendance.stream().mapToLong(AttendanceService.Row::total).sum();
+        List<MarkService.MarkRow> marks = markService.summary(me);
 
         model.addAttribute("student", me);
-        model.addAttribute("courseCount", attendance.size());
-        model.addAttribute("overallAttendance", GradeUtil.percent(present, total));
-        model.addAttribute("hasClasses", total > 0);
+        model.addAttribute("rows", attendance);
+        model.addAttribute("totals", AttendanceService.Totals.of(attendance));
+        model.addAttribute("marks", marks);
+        model.addAttribute("gpa", MarkService.gpa(marks));
+        model.addAttribute("credits", MarkService.totalCredits(marks));
         return "student/dashboard";
+    }
+
+    @GetMapping("/profile")
+    public String profile(Principal principal, Model model) {
+        model.addAttribute("student", currentUser.student(principal));
+        return "student/profile";
+    }
+
+    @GetMapping("/courses")
+    public String courses(Principal principal, Model model) {
+        List<MarkService.MarkRow> rows = markService.summary(currentUser.student(principal));
+        model.addAttribute("rows", rows);
+        model.addAttribute("credits", MarkService.totalCredits(rows));
+        return "student/courses";
     }
 
     @GetMapping("/attendance")
     public String attendance(Principal principal, Model model) {
-        model.addAttribute("rows", attendanceService.summary(currentUser.student(principal)));
+        Student me = currentUser.student(principal);
+        List<AttendanceService.Row> rows = attendanceService.summary(me);
+        model.addAttribute("rows", rows);
+        model.addAttribute("totals", AttendanceService.Totals.of(rows));
+        model.addAttribute("period", attendanceService.period(me).orElse(null));
         return "student/attendance";
     }
 
     @GetMapping("/marks")
     public String marks(Principal principal, Model model) {
-        model.addAttribute("rows", markService.summary(currentUser.student(principal)));
+        List<MarkService.MarkRow> rows = markService.summary(currentUser.student(principal));
+        model.addAttribute("rows", rows);
+        model.addAttribute("gpa", MarkService.gpa(rows));
+        model.addAttribute("credits", MarkService.totalCredits(rows));
         return "student/marks";
     }
 }

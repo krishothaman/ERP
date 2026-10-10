@@ -44,7 +44,7 @@ public class Course {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public void setDepartment(String department) { this.department = department == null ? null : department.trim().toUpperCase(); }
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
     public Integer getCredits() { return credits; }

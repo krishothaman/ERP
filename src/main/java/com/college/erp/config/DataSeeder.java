@@ -5,13 +5,15 @@ import com.college.erp.repository.*;
 import com.college.erp.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-/** Fills an empty database with an admin account and demo data so the portal is ready to show. */
+/** Fills an empty database with an admin account and realistic demo data so the portal is ready to show. */
 @Component
 public class DataSeeder implements CommandLineRunner {
 
@@ -22,6 +24,9 @@ public class DataSeeder implements CommandLineRunner {
     private final CourseRepository courseRepository;
     private final AttendanceRepository attendanceRepository;
     private final MarkRepository markRepository;
+
+    /** Fixed seed so the demo data is the same on every fresh database. */
+    private final Random random = new Random(42);
 
     public DataSeeder(UserRepository userRepository, UserService userService,
                       StudentRepository studentRepository, FacultyRepository facultyRepository,
@@ -37,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         if (userRepository.count() > 0) {
             return;
@@ -46,44 +52,81 @@ public class DataSeeder implements CommandLineRunner {
 
         Faculty ravi = faculty("Dr. Ravi Kumar", "CSE", "ravi@college.edu");
         Faculty meena = faculty("Prof. Meena Sharma", "CSE", "meena@college.edu");
+        Faculty anil = faculty("Dr. Anil Verma", "ECE", "anil@college.edu");
 
-        Course ds = course("CS201", "Data Structures", 4, ravi);
-        Course dbms = course("CS202", "Database Management Systems", 4, meena);
-        Course java = course("CS203", "Object Oriented Programming in Java", 3, ravi);
+        // CSE Year 2 (the main demo class) - CS203 is a 2-hour lab
+        List<Course> cseCourses = List.of(
+                course("CS201", "Data Structures and Algorithms", "CSE", 4, ravi),
+                course("CS202", "Database Management Systems", "CSE", 4, meena),
+                course("CS203", "Object Oriented Programming Lab", "CSE", 2, ravi),
+                course("CS204", "Operating Systems", "CSE", 3, meena),
+                course("MA201", "Transforms and Boundary Value Problems", "CSE", 4, ravi),
+                course("HS201", "Professional Ethics", "CSE", 1, meena));
+        List<Course> eceCourses = List.of(
+                course("EC201", "Signals and Systems", "ECE", 4, anil),
+                course("EC202", "Analog Circuits", "ECE", 3, anil));
 
-        String[] names = {"Aarav Patel", "Diya Nair", "Karthik Raman", "Priya Menon", "Rohan Gupta", "Sneha Reddy"};
-        List<Student> students = new ArrayList<>();
-        for (int i = 0; i < names.length; i++) {
-            String rollNo = "CSE200" + (i + 1);
-            Student s = new Student();
-            s.setRollNo(rollNo);
-            s.setName(names[i]);
-            s.setDepartment("CSE");
-            s.setYear(2);
-            s.setEmail(names[i].split(" ")[0].toLowerCase() + "@student.college.edu");
-            s.setPhone("98765432" + String.format("%02d", i + 1));
-            s.setUser(userService.createUser(rollNo, rollNo, Role.STUDENT));
-            students.add(studentRepository.save(s));
-        }
+        // name, attendance rate (how often present)
+        List<Student> cse = students("CSE", 2, new String[]{"Aarav Patel", "Diya Nair", "Karthik Raman",
+                "Priya Menon", "Rohan Gupta", "Sneha Reddy"});
+        double[] cseRates = {0.93, 0.88, 0.85, 0.96, 0.81, 0.62};
+        List<Student> ece = students("ECE", 2, new String[]{"Arjun Das", "Meera Iyer", "Vikram Singh"});
+        double[] eceRates = {0.90, 0.84, 0.70};
 
-        // Attendance for the last 10 weekdays. The last student is absent often, to show the red < 75% warning.
-        List<LocalDate> days = lastWeekdays(10);
-        for (Course course : List.of(ds, dbms, java)) {
+        seedClass(cse, cseRates, cseCourses);
+        seedClass(ece, eceRates, eceCourses);
+    }
+
+    /** Attendance for ~10 weeks and marks for all but the last course of the class. */
+    private void seedClass(List<Student> students, double[] rates, List<Course> courses) {
+        List<LocalDate> days = weekdays(LocalDate.now().minusDays(70), LocalDate.now().minusDays(1));
+        List<Attendance> rows = new ArrayList<>();
+        for (int c = 0; c < courses.size(); c++) {
+            Course course = courses.get(c);
             for (int d = 0; d < days.size(); d++) {
+                // each course meets on a different ~60% of the weekdays
+                if ((d + c) % 5 == 4 || (d * 3 + c) % 7 == 0) continue;
+                int hours = course.getCredits() == 2 ? 2 : (random.nextInt(4) == 0 ? 2 : 1);
                 for (int i = 0; i < students.size(); i++) {
-                    boolean present = (i == students.size() - 1) ? d % 2 == 1 : (i + d) % 7 != 0;
-                    attendanceRepository.save(new Attendance(students.get(i), course, days.get(d), present));
+                    rows.add(new Attendance(students.get(i), course, days.get(d), hours, status(rates[i])));
                 }
             }
         }
+        attendanceRepository.saveAll(rows);
 
-        // Marks for two courses; the Java course is left empty to show "not entered yet".
-        int[] dsMarks = {92, 78, 85, 67, 54, 38};
-        int[] dbmsMarks = {88, 81, 73, 95, 61, 45};
-        for (int i = 0; i < students.size(); i++) {
-            markRepository.save(new Mark(students.get(i), ds, dsMarks[i]));
-            markRepository.save(new Mark(students.get(i), dbms, dbmsMarks[i]));
+        List<Mark> marks = new ArrayList<>();
+        for (int c = 0; c < courses.size() - 1; c++) {
+            for (int i = 0; i < students.size(); i++) {
+                int base = (int) Math.round(rates[i] * 100) - 10;
+                int score = Math.max(25, Math.min(99, base + random.nextInt(21) - 5));
+                marks.add(new Mark(students.get(i), courses.get(c), score));
+            }
         }
+        markRepository.saveAll(marks);
+    }
+
+    private AttendanceStatus status(double presentRate) {
+        double roll = random.nextDouble();
+        if (roll < presentRate) return AttendanceStatus.PRESENT;
+        if (roll < presentRate + 0.04) return AttendanceStatus.OD;
+        return AttendanceStatus.ABSENT;
+    }
+
+    private List<Student> students(String department, int year, String[] names) {
+        List<Student> list = new ArrayList<>();
+        for (int i = 0; i < names.length; i++) {
+            String rollNo = department + year + "00" + (i + 1);
+            Student s = new Student();
+            s.setRollNo(rollNo);
+            s.setName(names[i]);
+            s.setDepartment(department);
+            s.setYear(year);
+            s.setEmail(names[i].split(" ")[0].toLowerCase() + "@student.college.edu");
+            s.setPhone("98765" + String.format("%05d", (department.hashCode() & 0xff) * 100 + i + 1));
+            s.setUser(userService.createUser(rollNo, rollNo, Role.STUDENT));
+            list.add(studentRepository.save(s));
+        }
+        return list;
     }
 
     private Faculty faculty(String name, String department, String email) {
@@ -95,25 +138,23 @@ public class DataSeeder implements CommandLineRunner {
         return facultyRepository.save(f);
     }
 
-    private Course course(String code, String name, int credits, Faculty faculty) {
+    private Course course(String code, String name, String department, int credits, Faculty faculty) {
         Course c = new Course();
         c.setCode(code);
         c.setName(name);
-        c.setDepartment("CSE");
+        c.setDepartment(department);
         c.setYear(2);
         c.setCredits(credits);
         c.setFaculty(faculty);
         return courseRepository.save(c);
     }
 
-    private List<LocalDate> lastWeekdays(int count) {
+    private List<LocalDate> weekdays(LocalDate from, LocalDate to) {
         List<LocalDate> days = new ArrayList<>();
-        LocalDate day = LocalDate.now().minusDays(1);
-        while (days.size() < count) {
+        for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
             if (day.getDayOfWeek() != DayOfWeek.SATURDAY && day.getDayOfWeek() != DayOfWeek.SUNDAY) {
-                days.add(0, day);
+                days.add(day);
             }
-            day = day.minusDays(1);
         }
         return days;
     }
