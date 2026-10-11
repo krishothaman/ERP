@@ -7,20 +7,41 @@ Admins manage students, faculty and courses; faculty mark attendance and enter m
 
 | Role | What they can do |
 |---|---|
-| **Admin** | Dashboard with counts · Add / edit / delete / search **students** · Manage **faculty** · Manage **courses** and assign faculty |
-| **Faculty** | See assigned courses · **Mark attendance** by date (edit any past day) · **Enter marks** (0–100) |
-| **Student** | View profile · **Attendance %** per course (red warning below 75%) · **Marks and grades** |
+| **Admin** | Dashboard (counts, students-per-department chart, low-attendance list) · Add / edit / delete / search **students** · Manage **faculty** · Manage **courses** and assign faculty |
+| **Faculty** | Dashboard with per-course class attendance · **Mark attendance** per session (1–3 hours, Present / Absent / OD-ML, edit any past day) · **Enter marks** (0–100) |
+| **Student** | Dashboard (attendance chart, hours donut, GPA) · Personal details · Course list · **Attendance details** in hours · **Grade / Mark & Credit** with GPA |
 | Everyone | Secure login · Change password · Logout |
 
 - Adding a student or faculty member automatically creates their login.
-- A student automatically takes every course of their **department and year**.
-- Grades: O ≥ 90, A+ ≥ 80, A ≥ 70, B+ ≥ 60, B ≥ 50, C ≥ 40, F < 40.
+- A student automatically takes every course of their **department and year** (department is stored upper-case, so "cse" = "CSE").
+- Grades: O ≥ 90, A+ ≥ 80, A ≥ 70, B+ ≥ 60, B ≥ 50, C ≥ 40, F < 40. Grade points: O 10, A+ 9, A 8, B+ 7, B 6, C 5, F 0.
+- **GPA** = Σ(credits × grade point) ÷ Σ(credits of graded courses).
+
+### Attendance rules
+
+Attendance is counted in **hours**. Each class session is 1–3 hours and every student is marked Present, Absent or OD/ML.
+
+| Column | Meaning |
+|---|---|
+| Max. hours | All hours held |
+| Att. hours | Hours present |
+| Absent hours | Hours absent |
+| Average % | Att. hours ÷ Max. hours |
+| OD/ML % | OD/ML hours ÷ Max. hours |
+| Total % | (Att. + OD/ML hours) ÷ Max. hours (**below 75% is shown in red**) |
+
+## Design
+
+The layout follows a classic admin-dashboard structure (left sidebar, top bar, stat cards, charts, tables).
+Visual style: warm cream background, dark sidebar, a single orange accent for primary actions, pill-shaped buttons and inputs, and hairline-bordered cards.
+Fonts: Bricolage Grotesque (headings), Geist (body), JetBrains Mono (roll numbers and course codes). Charts use Chart.js.
+The portal name is set once in `application.properties` (`app.name`).
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | HTML pages rendered with **Thymeleaf**, styled with **Bootstrap 5** |
+| Frontend | HTML pages rendered with **Thymeleaf**, **Bootstrap 5** grid + custom CSS, **Chart.js** charts |
 | Backend | **Java 17+**, **Spring Boot 3** (Spring MVC, Spring Security, Spring Data JPA / Hibernate) |
 | Database | **MySQL** (tables created automatically by Hibernate) |
 | Build | Maven |
@@ -49,9 +70,13 @@ The `college_erp` database, all tables, and demo data are created automatically 
 | Admin | `admin` | `admin123` |
 | Faculty | `ravi@college.edu` | `ravi@college.edu` |
 | Faculty | `meena@college.edu` | `meena@college.edu` |
+| Faculty | `anil@college.edu` | `anil@college.edu` |
 | Student | `CSE2001` … `CSE2006` | same as username |
+| Student | `ECE2001` … `ECE2003` | same as username |
 
 `CSE2006` (Sneha Reddy) has low attendance, to show the red warning.
+
+> **Reset demo data:** stop the app, run `DROP DATABASE college_erp;` in MySQL, and start the app again.
 
 ## Run the Tests
 
@@ -71,20 +96,23 @@ src/main/java/com/college/erp/
 │   ├── User, Role             Login accounts
 │   ├── Student, Faculty       People
 │   ├── Course                 Subjects
-│   └── Attendance, Mark       Records
+│   ├── Attendance, Mark       Records (attendance = hours + status)
+│   └── AttendanceStatus       PRESENT / ABSENT / OD
 ├── repository/                Spring Data JPA interfaces (database queries)
 ├── service/
 │   ├── AdminService           Add/delete logic that touches several tables
-│   ├── AttendanceService      Saving attendance, attendance %
+│   ├── AttendanceService      Saving attendance, hours and percentages
+│   ├── DashboardService       Dashboard numbers (departments, low attendance, class stats)
 │   ├── MarkService            Saving marks, grades
 │   ├── UserService            Login lookup, create user, change password
 │   ├── CurrentUser            Finds the logged-in student/faculty
-│   └── GradeUtil              Grade and percentage calculation
+│   └── GradeUtil              Grade, grade point and percentage calculation
 └── controller/                Handle web requests, return pages
     ├── AuthController         Login, home redirect, change password
     ├── AdminController        /admin/**
     ├── FacultyController      /faculty/**
-    └── StudentController      /student/**
+    ├── StudentController      /student/**
+    └── GlobalModel            Portal name, current page, user name for every page
 
 src/main/resources/
 ├── application.properties     Database settings

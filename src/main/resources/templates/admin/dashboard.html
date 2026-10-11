@@ -71,7 +71,7 @@
                                 <tr th:each="l : ${lowAttendance}">
                                     <td class="mono" th:text="${l.student().rollNo}"></td>
                                     <td th:text="${l.student().name}"></td>
-                                    <td class="num text-low fw-semibold" th:text="${#numbers.formatDecimal(l.totalPct(), 1, 1)} + '%'"></td>
+                                    <td class="num text-low fw-semibold" th:text="${#numbers.formatDecimal(l.totalPct(), 1, 2)} + '%'"></td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(lowAttendance)}">
                                     <td colspan="3" class="empty"><i class="bi bi-check-circle me-1"></i>Everyone is above 75%.</td>

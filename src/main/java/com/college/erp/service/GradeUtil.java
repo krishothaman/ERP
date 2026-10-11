@@ -29,9 +29,9 @@ public final class GradeUtil {
         };
     }
 
-    /** Percentage rounded to one decimal place; 0 when there are no classes yet. */
+    /** Percentage rounded to two decimal places; 0 when there are no classes yet. */
     public static double percent(long part, long total) {
         if (total == 0) return 0.0;
-        return Math.round(part * 1000.0 / total) / 10.0;
+        return Math.round(part * 10000.0 / total) / 100.0;
     }
 }

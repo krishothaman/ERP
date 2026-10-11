@@ -27,7 +27,8 @@ class GradeUtilTest {
     void percent() {
         assertEquals(0.0, GradeUtil.percent(0, 0));
         assertEquals(75.0, GradeUtil.percent(3, 4));
-        assertEquals(66.7, GradeUtil.percent(2, 3));
+        assertEquals(66.67, GradeUtil.percent(2, 3));
+        assertEquals(83.64, GradeUtil.percent(46, 55));
         assertEquals(100.0, GradeUtil.percent(5, 5));
     }
 

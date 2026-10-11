@@ -83,8 +83,9 @@ a {
     min-height: 100vh;
 }
 
+/* !important beats Bootstrap's offcanvas-lg rule that makes the background transparent on desktop */
 .sidebar {
-    background: var(--dark);
+    background-color: var(--dark) !important;
     color: var(--on-dark-mute);
 }
 
