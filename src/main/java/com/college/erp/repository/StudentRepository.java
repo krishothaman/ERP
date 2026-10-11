@@ -18,6 +18,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     boolean existsByRollNo(String rollNo);
 
+    boolean existsByRollNoAndIdNot(String rollNo, Long id);
+
     List<Student> findAllByOrderByRollNo();
 
     @Query("SELECT s FROM Student s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%')) "

@@ -44,10 +44,13 @@
                             <td class="text-end text-nowrap">
                                 <a class="btn-icon" th:href="@{/admin/students/{id}/edit(id=${s.id})}" title="Edit"
                                    th:aria-label="'Edit ' + ${s.name}"><i class="bi bi-pencil"></i></a>
-                                <form class="d-inline" th:action="@{/admin/students/{id}/delete(id=${s.id})}" method="post"
-                                      onsubmit="return confirm('Delete this student and all their attendance and marks?');">
-                                    <button class="btn-icon danger" type="submit" title="Delete" th:aria-label="'Delete ' + ${s.name}">
-                                        <i class="bi bi-trash"></i></button>
+                                <form th:id="'deleteForm-' + ${s.id}" class="d-inline" th:action="@{/admin/students/{id}/delete(id=${s.id})}" method="post">
+                                    <button class="btn-icon danger" type="button" title="Delete" th:aria-label="'Delete ' + ${s.name}"
+                                            th:data-student-name="${s.name}"
+                                            th:data-form-id="'deleteForm-' + ${s.id}"
+                                            onclick="showDeleteModal(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>
@@ -60,6 +63,67 @@
         </div>
     </main>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" style="background-color: rgba(0,0,0,0.45);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: var(--radius-md); border: 1px solid var(--hairline); box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" onclick="closeDeleteModal()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-2">Are you sure you want to delete <strong id="deleteTargetName">this student</strong>?</p>
+                <p class="text-muted small mb-0">All attendance records and marks associated with this student will also be removed.</p>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="submitDelete()">Delete Student</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <th:block th:replace="~{layout :: scripts}"></th:block>
+<script>
+    let activeDeleteFormId = null;
+    let bsModalInstance = null;
+
+    function showDeleteModal(btn) {
+        const studentName = btn.getAttribute('data-student-name') || 'this student';
+        activeDeleteFormId = btn.getAttribute('data-form-id');
+        document.getElementById('deleteTargetName').textContent = studentName;
+
+        const modalEl = document.getElementById('deleteModal');
+        if (window.bootstrap && window.bootstrap.Modal) {
+            if (!bsModalInstance) {
+                bsModalInstance = new bootstrap.Modal(modalEl);
+            }
+            bsModalInstance.show();
+        } else {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+        }
+    }
+
+    function closeDeleteModal() {
+        const modalEl = document.getElementById('deleteModal');
+        if (bsModalInstance) {
+            bsModalInstance.hide();
+        }
+        modalEl.classList.remove('show');
+        modalEl.style.display = 'none';
+        activeDeleteFormId = null;
+    }
+
+    function submitDelete() {
+        if (activeDeleteFormId) {
+            const form = document.getElementById(activeDeleteFormId);
+            if (form) {
+                form.submit();
+            }
+        }
+    }
+</script>
 </body>
 </html>

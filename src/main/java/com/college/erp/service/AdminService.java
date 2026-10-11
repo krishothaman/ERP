@@ -42,23 +42,38 @@ public class AdminService {
         studentRepository.save(student);
     }
 
-    /** Roll number is not changed on edit because it is also the login username. */
+    /** Updates student profile and syncs login username if roll number changed. */
     public void updateStudent(Student form) {
         Student existing = studentRepository.findById(form.getId()).orElseThrow();
+        String oldRollNo = existing.getRollNo();
+        String newRollNo = form.getRollNo();
+
+        existing.setRollNo(newRollNo);
         existing.setName(form.getName());
         existing.setDepartment(form.getDepartment());
         existing.setYear(form.getYear());
         existing.setEmail(form.getEmail());
         existing.setPhone(form.getPhone());
+
+        if (newRollNo != null && !newRollNo.equals(oldRollNo) && existing.getUser() != null) {
+            User user = existing.getUser();
+            user.setUsername(newRollNo);
+            userRepository.save(user);
+        }
     }
 
     public void deleteStudent(Long id) {
         Student student = studentRepository.findById(id).orElseThrow();
+        User user = student.getUser();
+        // Bulk-delete child rows immediately (JPQL @Modifying queries hit the DB right away).
         attendanceRepository.deleteByStudent(student);
         markRepository.deleteByStudent(student);
+        // Null the user FK before deleting student, then delete user last.
+        student.setUser(null);
+        studentRepository.saveAndFlush(student);
         studentRepository.delete(student);
-        if (student.getUser() != null) {
-            userRepository.delete(student.getUser());
+        if (user != null) {
+            userRepository.delete(user);
         }
     }
 

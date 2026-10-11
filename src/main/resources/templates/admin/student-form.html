@@ -19,10 +19,10 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="rollNo">Roll number</label>
-                            <input class="form-control mono" th:field="*{rollNo}" th:readonly="${student.id != null}"
+                            <input class="form-control mono" th:field="*{rollNo}"
                                    th:classappend="${#fields.hasErrors('rollNo')} ? 'is-invalid'">
                             <div class="invalid-feedback" th:errors="*{rollNo}"></div>
-                            <div class="form-text" th:if="${student.id == null}">Also the student's username and first password.</div>
+                            <div class="form-text">Also serves as the student's login username.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="name">Full name</label>

@@ -5,6 +5,7 @@ import com.college.erp.entity.AttendanceStatus;
 import com.college.erp.entity.Course;
 import com.college.erp.entity.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,7 +31,11 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     @Query("SELECT MAX(a.date) FROM Attendance a WHERE a.student = :student")
     Optional<LocalDate> lastDate(@Param("student") Student student);
 
-    void deleteByStudent(Student student);
+    @Modifying
+    @Query("DELETE FROM Attendance a WHERE a.student = :student")
+    void deleteByStudent(@Param("student") Student student);
 
-    void deleteByCourse(Course course);
+    @Modifying
+    @Query("DELETE FROM Attendance a WHERE a.course = :course")
+    void deleteByCourse(@Param("course") Course course);
 }

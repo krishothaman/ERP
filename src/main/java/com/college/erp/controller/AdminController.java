@@ -84,8 +84,13 @@ public class AdminController {
     public String saveStudent(@Valid @ModelAttribute("student") Student student, BindingResult result,
                               RedirectAttributes redirect) {
         boolean isNew = student.getId() == null;
-        if (isNew && studentRepository.existsByRollNo(student.getRollNo())) {
-            result.rejectValue("rollNo", "duplicate", "This roll number already exists");
+        if (student.getRollNo() != null && !student.getRollNo().isBlank()) {
+            boolean duplicate = isNew
+                    ? studentRepository.existsByRollNo(student.getRollNo().trim())
+                    : studentRepository.existsByRollNoAndIdNot(student.getRollNo().trim(), student.getId());
+            if (duplicate) {
+                result.rejectValue("rollNo", "duplicate", "This roll number already exists");
+            }
         }
         if (result.hasErrors()) {
             return "admin/student-form";
