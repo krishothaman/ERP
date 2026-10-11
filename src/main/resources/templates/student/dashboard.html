@@ -6,90 +6,45 @@
     <aside th:replace="~{layout :: sidebar}"></aside>
     <main class="main">
         <header th:replace="~{layout :: topbar('Dashboard')}"></header>
-        <div class="content">
+        <div class="content" style="max-width: 820px;">
 
             <div class="page-head">
                 <div>
                     <h2 class="page-title">Welcome back, <span th:text="${#strings.arraySplit(student.name, ' ')[0]}">Student</span></h2>
-                    <p class="page-sub">
-                        <span th:text="${student.department} + ' · Year ' + ${student.year}"></span> ·
-                        <span class="mono" th:text="${student.rollNo}"></span>
-                    </p>
+                    <p class="page-sub">Your student details for this academic year.</p>
                 </div>
-                <a class="btn btn-outline" th:href="@{/student/attendance}"><i class="bi bi-calendar2-check me-1"></i>Attendance details</a>
             </div>
 
             <div class="alert alert-danger d-flex gap-2 align-items-center" th:if="${totals.low()}">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <span>Your overall attendance is below 75%. Please attend upcoming classes regularly.</span>
+                <span>Your overall attendance is below 75%. <a th:href="@{/student/attendance}">See attendance details</a>.</span>
             </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-sm-6 col-xl-3">
-                    <a class="stat" th:href="@{/student/attendance}">
-                        <div>
-                            <div class="stat-label">Overall attendance</div>
-                            <div class="stat-value" th:classappend="${totals.low()} ? 'text-low'"
-                                 th:text="${totals.max() > 0} ? ${totals.totalPct()} + '%' : '-'">0%</div>
-                            <div class="stat-note" th:text="${totals.attended() + totals.od()} + ' of ' + ${totals.max()} + ' hours'"></div>
-                        </div>
-                        <span class="stat-icon"><i class="bi bi-calendar2-check"></i></span>
-                    </a>
+            <!-- Student ID card -->
+            <div class="panel id-card"
+                 th:with="years=${ {'I', 'II', 'III', 'IV', 'V'} },
+                          yearLabel=${student.year >= 1 and student.year <= 5 ? years[student.year - 1] : student.year}">
+                <div class="id-card-head">
+                    <span><i class="bi bi-mortarboard-fill me-2"></i><span th:text="${appName}">College ERP Portal</span></span>
+                    <span class="id-card-tag">Student</span>
                 </div>
-                <div class="col-sm-6 col-xl-3">
-                    <a class="stat" th:href="@{/student/courses}">
-                        <div>
-                            <div class="stat-label">Courses this semester</div>
-                            <div class="stat-value" th:text="${#lists.size(rows)}">0</div>
-                            <div class="stat-note" th:text="${student.department} + ' · Year ' + ${student.year}"></div>
-                        </div>
-                        <span class="stat-icon"><i class="bi bi-journal-bookmark"></i></span>
-                    </a>
-                </div>
-                <div class="col-sm-6 col-xl-3">
-                    <a class="stat" th:href="@{/student/marks}">
-                        <div>
-                            <div class="stat-label">Total credits</div>
-                            <div class="stat-value" th:text="${credits}">0</div>
-                            <div class="stat-note">Registered this semester</div>
-                        </div>
-                        <span class="stat-icon"><i class="bi bi-stack"></i></span>
-                    </a>
-                </div>
-                <div class="col-sm-6 col-xl-3">
-                    <a class="stat" th:href="@{/student/marks}">
-                        <div>
-                            <div class="stat-label">Current GPA</div>
-                            <div class="stat-value" th:text="${gpa > 0} ? ${#numbers.formatDecimal(gpa, 1, 2)} : '-'">0</div>
-                            <div class="stat-note">On a 10-point scale</div>
-                        </div>
-                        <span class="stat-icon"><i class="bi bi-award"></i></span>
-                    </a>
-                </div>
-            </div>
-
-            <div th:replace="~{student/charts :: attendanceCharts}"></div>
-
-            <div class="panel">
-                <div class="panel-head">
-                    <h2 class="panel-title">Marks summary</h2>
-                    <a class="small" th:href="@{/student/marks}">View all &rarr;</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead><tr><th>Code</th><th>Course</th><th class="num">Total</th><th class="text-center">Grade</th></tr></thead>
-                        <tbody>
-                        <tr th:each="m : ${marks}">
-                            <td class="mono" th:text="${m.course().code}"></td>
-                            <td th:text="${m.course().name}"></td>
-                            <td class="num" th:text="${m.marks()} != null ? ${m.marks()} : '-'"></td>
-                            <td class="text-center">
-                                <span th:if="${m.grade()}" class="grade" th:classappend="${m.grade() == 'F'} ? 'grade-f'" th:text="${m.grade()}"></span>
-                                <span th:unless="${m.grade()}" class="pill pill-mute">Not graded yet</span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                <div class="id-card-body">
+                    <div class="id-photo" role="img" th:aria-label="'Photo of ' + ${student.name}">
+                        <i class="bi bi-person-fill"></i>
+                        <span>Photo</span>
+                    </div>
+                    <dl class="id-details">
+                        <dt>Name</dt>
+                        <dd class="id-name" th:text="${student.name}">Student</dd>
+                        <dt>Register number</dt>
+                        <dd class="mono" th:text="${student.rollNo}"></dd>
+                        <dt>Department</dt>
+                        <dd th:text="${student.department}"></dd>
+                        <dt>Year of study</dt>
+                        <dd th:text="${yearLabel} + ' Year'"></dd>
+                        <dt>Academic year</dt>
+                        <dd th:text="${academicYear}"></dd>
+                    </dl>
                 </div>
             </div>
 
@@ -97,7 +52,5 @@
     </main>
 </div>
 <th:block th:replace="~{layout :: scripts}"></th:block>
-<th:block th:replace="~{layout :: chartjs}"></th:block>
-<th:block th:replace="~{student/charts :: attendanceChartsScript}"></th:block>
 </body>
 </html>

@@ -13,7 +13,7 @@ import java.security.Principal;
 import java.util.Optional;
 
 /**
- * Values every page needs: the portal name, the current URL (to highlight the active
+ * Values every page needs: the portal name, the academic year, the current URL (to highlight the active
  * sidebar link) and the logged-in person's display name for the top bar.
  */
 @ControllerAdvice
@@ -21,6 +21,9 @@ public class GlobalModel {
 
     @Value("${app.name}")
     private String appName;
+
+    @Value("${app.academic-year:2026-27}")
+    private String academicYear;
 
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
@@ -36,6 +39,11 @@ public class GlobalModel {
     @ModelAttribute("appName")
     public String appName() {
         return appName;
+    }
+
+    @ModelAttribute("academicYear")
+    public String academicYear() {
+        return academicYear;
     }
 
     @ModelAttribute("currentPath")

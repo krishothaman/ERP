@@ -21,13 +21,16 @@ class StudentViewTest {
 
     @Test
     @WithUserDetails("CSE2001")
-    void dashboardShowsOwnSummaryAndCharts() throws Exception {
+    void dashboardShowsOnlyTheStudentIdCard() throws Exception {
         mvc.perform(get("/student"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Aarav Patel")))
+                .andExpect(content().string(containsString("CSE2001")))
+                .andExpect(content().string(containsString("Register number")))
+                .andExpect(content().string(containsString("Academic year")))
+                .andExpect(content().string(containsString("II Year")))
                 .andExpect(content().string(not(containsString("Sneha Reddy"))))
-                .andExpect(model().attributeExists("totals", "gpa", "credits"))
-                .andExpect(content().string(containsString("attendanceChart")));
+                .andExpect(content().string(not(containsString("attendanceChart"))));
     }
 
     @Test

@@ -29,16 +29,10 @@ public class StudentController {
 
     @GetMapping
     public String dashboard(Principal principal, Model model) {
+        // The dashboard is just the student's ID card; totals are only for the low-attendance warning
         Student me = currentUser.student(principal);
-        List<AttendanceService.Row> attendance = attendanceService.summary(me);
-        List<MarkService.MarkRow> marks = markService.summary(me);
-
         model.addAttribute("student", me);
-        model.addAttribute("rows", attendance);
-        model.addAttribute("totals", AttendanceService.Totals.of(attendance));
-        model.addAttribute("marks", marks);
-        model.addAttribute("gpa", MarkService.gpa(marks));
-        model.addAttribute("credits", MarkService.totalCredits(marks));
+        model.addAttribute("totals", AttendanceService.Totals.of(attendanceService.summary(me)));
         return "student/dashboard";
     }
 
