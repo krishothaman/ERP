@@ -11,7 +11,7 @@
             <div class="page-head">
                 <div>
                     <h2 class="page-title">Grade, mark &amp; credit</h2>
-                    <p class="page-sub">Grades: O &ge; 90 · A+ &ge; 80 · A &ge; 70 · B+ &ge; 60 · B &ge; 50 · C &ge; 40 · F &lt; 40</p>
+                    <p class="page-sub">IA-1 and IA-2 are out of 50 and make up the internal mark (40). SEM is out of 100 and counts 60. Total = internal + 60% of SEM.<br>Grades: O &ge; 90 · A+ &ge; 80 · A &ge; 70 · B+ &ge; 60 · B &ge; 50 · C &ge; 40 · F &lt; 40</p>
                 </div>
             </div>
 
@@ -44,7 +44,12 @@
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
-                        <tr><th>Code</th><th>Course</th><th class="num">Credits</th><th class="num">Marks</th>
+                        <tr><th>Code</th><th>Course</th><th class="num">Credits</th>
+                            <th class="num">IA-1 <span class="text-muted fw-normal">/ 50</span></th>
+                            <th class="num">IA-2 <span class="text-muted fw-normal">/ 50</span></th>
+                            <th class="num">Internal <span class="text-muted fw-normal">/ 40</span></th>
+                            <th class="num">SEM <span class="text-muted fw-normal">/ 100</span></th>
+                            <th class="num">Total <span class="text-muted fw-normal">/ 100</span></th>
                             <th class="text-center">Grade</th><th class="num">Grade point</th><th class="num">Credit points</th></tr>
                         </thead>
                         <tbody>
@@ -52,7 +57,11 @@
                             <td class="mono" th:text="${r.course().code}"></td>
                             <td th:text="${r.course().name}"></td>
                             <td class="num" th:text="${r.course().credits}"></td>
-                            <td class="num" th:text="${r.marks()} != null ? ${r.marks()} + ' / 100' : '-'"></td>
+                            <td class="num" th:text="${r.ia1()} ?: '-'"></td>
+                            <td class="num" th:text="${r.ia2()} ?: '-'"></td>
+                            <td class="num" th:text="${r.internal()} ?: '-'"></td>
+                            <td class="num" th:text="${r.sem()} ?: '-'"></td>
+                            <td class="num fw-semibold" th:text="${r.marks()} ?: '-'"></td>
                             <td class="text-center">
                                 <span th:if="${r.grade()}" class="grade" th:classappend="${r.grade() == 'F'} ? 'grade-f'" th:text="${r.grade()}"></span>
                                 <span th:unless="${r.grade()}" class="pill pill-mute">Not graded yet</span>
@@ -60,13 +69,13 @@
                             <td class="num" th:text="${r.gradePoint()} ?: '-'"></td>
                             <td class="num" th:text="${r.gradePoint()} != null ? ${r.gradePoint() * r.course().credits} : '-'"></td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="7" class="empty">No courses for your department and year yet.</td></tr>
+                        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="11" class="empty">No courses for your department and year yet.</td></tr>
                         </tbody>
                         <tfoot th:unless="${#lists.isEmpty(rows)}">
                         <tr>
                             <td colspan="2">Total</td>
                             <td class="num" th:text="${credits}"></td>
-                            <td colspan="3" class="text-end">GPA</td>
+                            <td colspan="7" class="text-end">GPA</td>
                             <td class="num" th:text="${gpa > 0} ? ${#numbers.formatDecimal(gpa, 1, 2)} : '-'"></td>
                         </tr>
                         </tfoot>

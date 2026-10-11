@@ -44,14 +44,39 @@ class GradeUtilTest {
     }
 
     @Test
+    void totalIsFortyPercentInternalPlusSixtyPercentSem() {
+        // (40 + 45) of 100 -> 34 of 40; 80 of 100 -> 48 of 60
+        assertEquals(82, GradeUtil.total(40, 45, 80));
+        assertEquals(100, GradeUtil.total(50, 50, 100));
+        assertEquals(0, GradeUtil.total(0, 0, 0));
+        assertEquals(55, GradeUtil.total(30, 30, 51)); // 24 + 30.6 = 54.6 -> 55
+        assertEquals(34, GradeUtil.internal(40, 45));
+    }
+
+    @Test
+    void rowIsGradedOnlyWhenAllThreeMarksAreIn() {
+        MarkService.MarkRow full = MarkService.MarkRow.of(course(3), 40, 45, 80);
+        assertEquals(34, full.internal());
+        assertEquals(82, full.marks());
+        assertEquals("A+", full.grade());
+
+        MarkService.MarkRow partial = MarkService.MarkRow.of(course(3), 40, 45, null);
+        assertEquals(34, partial.internal());
+        assertEquals(null, partial.marks());
+        assertEquals(null, partial.grade());
+
+        assertEquals(null, MarkService.MarkRow.of(course(3), 40, null, null).internal());
+    }
+
+    @Test
     void gpaIsCreditWeightedAndSkipsUngradedCourses() {
         // 4 credits of O (10) + 2 credits of B (6) = (40 + 12) / 6 = 8.67; ungraded course ignored
         List<MarkService.MarkRow> rows = List.of(
-                MarkService.MarkRow.of(course(4), 95),
-                MarkService.MarkRow.of(course(2), 55),
-                MarkService.MarkRow.of(course(3), null));
+                MarkService.MarkRow.of(course(4), 50, 50, 92),
+                MarkService.MarkRow.of(course(2), 30, 30, 51),
+                MarkService.MarkRow.of(course(3), 40, 45, null));
         assertEquals(8.67, MarkService.gpa(rows));
-        assertEquals(0.0, MarkService.gpa(List.of(MarkService.MarkRow.of(course(3), null))));
+        assertEquals(0.0, MarkService.gpa(List.of(MarkService.MarkRow.of(course(3), null, null, null))));
     }
 
     @Test

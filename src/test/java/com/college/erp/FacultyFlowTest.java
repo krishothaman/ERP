@@ -3,6 +3,7 @@ package com.college.erp;
 import com.college.erp.entity.Attendance;
 import com.college.erp.entity.AttendanceStatus;
 import com.college.erp.entity.Course;
+import com.college.erp.entity.Mark;
 import com.college.erp.entity.Student;
 import com.college.erp.repository.AttendanceRepository;
 import com.college.erp.repository.CourseRepository;
@@ -102,17 +103,33 @@ class FacultyFlowTest {
     void savingMarksUpsertsAndRejectsOutOfRange() throws Exception {
         Course c = courses.findByCode("CS203").orElseThrow();
         Student first = students.findByDepartmentAndYearOrderByRollNo("CSE", 2).get(0);
+        String id = first.getId().toString();
 
+        // IA-1 only, the rest still blank
         mvc.perform(post("/faculty/marks").with(csrf())
-                        .param("courseId", c.getId().toString()).param("m_" + first.getId(), "77"))
+                        .param("courseId", c.getId().toString()).param("ia1_" + id, "40"))
                 .andExpect(status().is3xxRedirection());
-        assertEquals(77, marks.findByStudentAndCourse(first, c).orElseThrow().getMarks());
+        Mark m = marks.findByStudentAndCourse(first, c).orElseThrow();
+        assertEquals(40, m.getIa1());
+        assertNull(m.getTotal());
 
         mvc.perform(post("/faculty/marks").with(csrf())
-                        .param("courseId", c.getId().toString()).param("m_" + first.getId(), "150"))
+                        .param("courseId", c.getId().toString())
+                        .param("ia1_" + id, "40").param("ia2_" + id, "45").param("sem_" + id, "80"))
+                .andExpect(status().is3xxRedirection());
+        assertEquals(82, marks.findByStudentAndCourse(first, c).orElseThrow().getTotal());
+
+        mvc.perform(post("/faculty/marks").with(csrf())
+                        .param("courseId", c.getId().toString())
+                        .param("ia1_" + id, "60").param("ia2_" + id, "45").param("sem_" + id, "80"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("between 0 and 50")));
+        mvc.perform(post("/faculty/marks").with(csrf())
+                        .param("courseId", c.getId().toString())
+                        .param("ia1_" + id, "40").param("ia2_" + id, "45").param("sem_" + id, "101"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("between 0 and 100")));
-        assertEquals(77, marks.findByStudentAndCourse(first, c).orElseThrow().getMarks());
+        assertEquals(82, marks.findByStudentAndCourse(first, c).orElseThrow().getTotal());
     }
 
     @Test

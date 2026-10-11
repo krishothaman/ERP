@@ -14,13 +14,27 @@ import java.util.*;
 @Service
 public class MarkService {
 
-    /** One line of a student's marks report; marks, grade and grade point are null if not entered yet. */
-    public record MarkRow(Course course, Integer marks, String grade, Integer gradePoint) {
+    /** The three marks a faculty member enters for one student; any may be null (not entered yet). */
+    public record Scores(Integer ia1, Integer ia2, Integer sem) {
 
-        public static MarkRow of(Course course, Integer marks) {
-            if (marks == null) return new MarkRow(course, null, null, null);
-            String grade = GradeUtil.grade(marks);
-            return new MarkRow(course, marks, grade, GradeUtil.gradePoint(grade));
+        public boolean isEmpty() {
+            return ia1 == null && ia2 == null && sem == null;
+        }
+    }
+
+    /**
+     * One line of a student's marks report. internal (out of 40) needs both IAs; marks (the total out of 100),
+     * grade and grade point need all three marks, and are null until then.
+     */
+    public record MarkRow(Course course, Integer ia1, Integer ia2, Integer sem,
+                          Integer internal, Integer marks, String grade, Integer gradePoint) {
+
+        public static MarkRow of(Course course, Integer ia1, Integer ia2, Integer sem) {
+            Integer internal = ia1 != null && ia2 != null ? GradeUtil.internal(ia1, ia2) : null;
+            if (internal == null || sem == null) return new MarkRow(course, ia1, ia2, sem, internal, null, null, null);
+            int total = GradeUtil.total(ia1, ia2, sem);
+            String grade = GradeUtil.grade(total);
+            return new MarkRow(course, ia1, ia2, sem, internal, total, grade, GradeUtil.gradePoint(grade));
         }
     }
 
@@ -51,23 +65,33 @@ public class MarkService {
         this.courseRepository = courseRepository;
     }
 
-    /** studentId -> marks for a course. */
-    public Map<Long, Integer> marksMap(Course course) {
-        Map<Long, Integer> map = new HashMap<>();
+    /** studentId -> IA-1 / IA-2 / SEM marks for a course. */
+    public Map<Long, Scores> marksMap(Course course) {
+        Map<Long, Scores> map = new HashMap<>();
         for (Mark m : markRepository.findByCourse(course)) {
-            map.put(m.getStudent().getId(), m.getMarks());
+            map.put(m.getStudent().getId(), new Scores(m.getIa1(), m.getIa2(), m.getSem()));
         }
         return map;
     }
 
-    /** Saves the given marks (studentId -> marks). Callers must check the 0-100 range first. */
+    /**
+     * Saves the given marks (studentId -> scores); a blank box clears that mark, and a student with
+     * every box blank has their row removed. Callers must check the ranges first.
+     */
     @Transactional
-    public void save(Course course, Map<Long, Integer> marksByStudent) {
-        for (Map.Entry<Long, Integer> entry : marksByStudent.entrySet()) {
+    public void save(Course course, Map<Long, Scores> scoresByStudent) {
+        for (Map.Entry<Long, Scores> entry : scoresByStudent.entrySet()) {
             Student student = studentRepository.findById(entry.getKey()).orElseThrow();
-            Mark mark = markRepository.findByStudentAndCourse(student, course)
-                    .orElse(new Mark(student, course, entry.getValue()));
-            mark.setMarks(entry.getValue());
+            Scores s = entry.getValue();
+            Optional<Mark> existing = markRepository.findByStudentAndCourse(student, course);
+            if (s.isEmpty()) {
+                existing.ifPresent(markRepository::delete);
+                continue;
+            }
+            Mark mark = existing.orElse(new Mark(student, course, null, null, null));
+            mark.setIa1(s.ia1());
+            mark.setIa2(s.ia2());
+            mark.setSem(s.sem());
             markRepository.save(mark);
         }
     }
@@ -76,8 +100,9 @@ public class MarkService {
     public List<MarkRow> summary(Student student) {
         List<MarkRow> rows = new ArrayList<>();
         for (Course course : courseRepository.findByDepartmentAndYearOrderByCode(student.getDepartment(), student.getYear())) {
-            Integer marks = markRepository.findByStudentAndCourse(student, course).map(Mark::getMarks).orElse(null);
-            rows.add(MarkRow.of(course, marks));
+            Optional<Mark> m = markRepository.findByStudentAndCourse(student, course);
+            rows.add(MarkRow.of(course, m.map(Mark::getIa1).orElse(null),
+                    m.map(Mark::getIa2).orElse(null), m.map(Mark::getSem).orElse(null)));
         }
         return rows;
     }

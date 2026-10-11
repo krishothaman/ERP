@@ -8,6 +8,7 @@ import com.college.erp.repository.CourseRepository;
 import com.college.erp.service.AttendanceService;
 import com.college.erp.service.CurrentUser;
 import com.college.erp.service.DashboardService;
+import com.college.erp.service.GradeUtil;
 import com.college.erp.service.MarkService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -108,42 +109,52 @@ public class FacultyController {
         return "faculty/marks";
     }
 
-    /** Marks arrive as m_{studentId}=value. Blank boxes are skipped. */
+    /**
+     * Marks arrive as ia1_{studentId}, ia2_{studentId} and sem_{studentId}. A blank box means "not entered";
+     * students with none of the three fields in the request are left untouched.
+     */
     @PostMapping("/marks")
     public String saveMarks(@RequestParam Long courseId, @RequestParam Map<String, String> params,
                             Principal principal, Model model, RedirectAttributes redirect) {
         Course course = myCourse(courseId, principal);
         List<Student> students = attendanceService.studentsOf(course);
 
-        Map<Long, Integer> toSave = new HashMap<>();
-        Map<Long, Integer> entered = new HashMap<>();
-        String error = null;
+        Map<Long, MarkService.Scores> toSave = new HashMap<>();
+        List<String> errors = new ArrayList<>();
         for (Student s : students) {
-            String value = params.get("m_" + s.getId());
-            if (value == null || value.isBlank()) continue;
-            try {
-                int marks = Integer.parseInt(value.trim());
-                entered.put(s.getId(), marks);
-                if (marks < 0 || marks > 100) {
-                    error = "Marks for " + s.getName() + " must be between 0 and 100.";
-                } else {
-                    toSave.put(s.getId(), marks);
-                }
-            } catch (NumberFormatException e) {
-                error = "Marks for " + s.getName() + " must be a whole number.";
+            String id = s.getId().toString();
+            if (!params.containsKey("ia1_" + id) && !params.containsKey("ia2_" + id) && !params.containsKey("sem_" + id)) {
+                continue;
             }
+            Integer ia1 = parseMark(params.get("ia1_" + id), GradeUtil.IA_MAX, "IA-1", s, errors);
+            Integer ia2 = parseMark(params.get("ia2_" + id), GradeUtil.IA_MAX, "IA-2", s, errors);
+            Integer sem = parseMark(params.get("sem_" + id), GradeUtil.SEM_MAX, "SEM", s, errors);
+            toSave.put(s.getId(), new MarkService.Scores(ia1, ia2, sem));
         }
 
-        if (error != null) {
+        if (!errors.isEmpty()) {
             model.addAttribute("course", course);
             model.addAttribute("students", students);
-            model.addAttribute("marks", entered);
-            model.addAttribute("error", error);
+            model.addAttribute("marks", toSave);
+            model.addAttribute("error", errors.get(0) + (errors.size() > 1 ? " (and " + (errors.size() - 1) + " more)" : ""));
             return "faculty/marks";
         }
         markService.save(course, toSave);
         redirect.addFlashAttribute("msg", "Marks saved.");
         return "redirect:/faculty/marks?courseId=" + courseId;
+    }
+
+    /** Blank -> null. Out-of-range or non-numeric values add an error and come back as null. */
+    private Integer parseMark(String value, int max, String exam, Student s, List<String> errors) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            int mark = Integer.parseInt(value.trim());
+            if (mark >= 0 && mark <= max) return mark;
+            errors.add(exam + " marks for " + s.getName() + " must be between 0 and " + max + ".");
+        } catch (NumberFormatException e) {
+            errors.add(exam + " marks for " + s.getName() + " must be a whole number.");
+        }
+        return null;
     }
 
     /** Loads a course and makes sure it belongs to the logged-in faculty member. */

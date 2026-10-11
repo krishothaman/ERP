@@ -16,6 +16,20 @@ public final class GradeUtil {
         return "F";
     }
 
+    /** IA-1 and IA-2 are out of 50 each; the semester exam is out of 100. */
+    public static final int IA_MAX = 50;
+    public static final int SEM_MAX = 100;
+
+    /** IA-1 + IA-2 (out of 100) scaled to 40, rounded. */
+    public static int internal(int ia1, int ia2) {
+        return (4 * (ia1 + ia2) + 5) / 10;
+    }
+
+    /** Final mark out of 100: internals count 40%, the semester exam 60%. */
+    public static int total(int ia1, int ia2, int sem) {
+        return (4 * (ia1 + ia2) + 6 * sem + 5) / 10;
+    }
+
     /** 10-point scale used for the GPA. */
     public static int gradePoint(String grade) {
         return switch (grade) {

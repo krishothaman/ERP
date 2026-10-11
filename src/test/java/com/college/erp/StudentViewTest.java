@@ -67,6 +67,8 @@ class StudentViewTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("CS201")))
                 .andExpect(content().string(containsString("GPA")))
+                .andExpect(content().string(containsString("IA-1")))
+                .andExpect(content().string(containsString("SEM")))
                 .andExpect(content().string(containsString("Not graded yet")));
     }
 

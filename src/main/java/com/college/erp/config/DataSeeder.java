@@ -9,9 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /** Fills an empty database with an admin account and realistic demo data so the portal is ready to show. */
 @Component
@@ -45,6 +43,8 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (userRepository.count() > 0) {
+            // databases created before IA/SEM marks existed get demo marks once
+            if (markRepository.count() == 0) seedMarksForExistingStudents();
             return;
         }
 
@@ -77,7 +77,7 @@ public class DataSeeder implements CommandLineRunner {
         seedClass(ece, eceRates, eceCourses);
     }
 
-    /** Attendance for ~10 weeks and marks for all but the last course of the class. */
+    /** Attendance for ~10 weeks, then marks. */
     private void seedClass(List<Student> students, double[] rates, List<Course> courses) {
         List<LocalDate> days = weekdays(LocalDate.now().minusDays(70), LocalDate.now().minusDays(1));
         List<Attendance> rows = new ArrayList<>();
@@ -94,15 +94,45 @@ public class DataSeeder implements CommandLineRunner {
         }
         attendanceRepository.saveAll(rows);
 
+        seedMarks(students, rates, courses);
+    }
+
+    /**
+     * IA-1, IA-2 and SEM for every course except the last one, which only has IA-1 so far
+     * (shows a course still in progress). Better attendance -> better marks, roughly.
+     */
+    private void seedMarks(List<Student> students, double[] rates, List<Course> courses) {
         List<Mark> marks = new ArrayList<>();
-        for (int c = 0; c < courses.size() - 1; c++) {
+        for (int c = 0; c < courses.size(); c++) {
+            boolean last = c == courses.size() - 1;
             for (int i = 0; i < students.size(); i++) {
-                int base = (int) Math.round(rates[i] * 100) - 10;
-                int score = Math.max(25, Math.min(99, base + random.nextInt(21) - 5));
-                marks.add(new Mark(students.get(i), courses.get(c), score));
+                int level = (int) Math.round(rates[i] * 100) - 8;
+                Integer ia1 = clamp(level / 2 + random.nextInt(11) - 5, 10, 50);
+                Integer ia2 = last ? null : clamp(level / 2 + random.nextInt(11) - 5, 10, 50);
+                Integer sem = last ? null : clamp(level + random.nextInt(21) - 10, 20, 100);
+                marks.add(new Mark(students.get(i), courses.get(c), ia1, ia2, sem));
             }
         }
         markRepository.saveAll(marks);
+    }
+
+    private void seedMarksForExistingStudents() {
+        Map<String, List<Student>> classes = new LinkedHashMap<>();
+        for (Student s : studentRepository.findAll()) {
+            classes.computeIfAbsent(s.getDepartment() + "/" + s.getYear(), k -> new ArrayList<>()).add(s);
+        }
+        for (List<Student> students : classes.values()) {
+            Student first = students.get(0);
+            List<Course> courses = courseRepository.findByDepartmentAndYearOrderByCode(first.getDepartment(), first.getYear());
+            if (courses.isEmpty()) continue;
+            double[] rates = new double[students.size()];
+            for (int i = 0; i < rates.length; i++) rates[i] = 0.65 + random.nextDouble() * 0.3;
+            seedMarks(students, rates, courses);
+        }
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private AttendanceStatus status(double presentRate) {

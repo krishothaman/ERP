@@ -8,13 +8,14 @@ Admins manage students, faculty and courses; faculty mark attendance and enter m
 | Role | What they can do |
 |---|---|
 | **Admin** | Dashboard (counts, students-per-department chart, low-attendance list) · Add / edit / delete / search **students** · Manage **faculty** · Manage **courses** and assign faculty |
-| **Faculty** | Dashboard with per-course class attendance · **Mark attendance** per session (1–3 hours, Present / Absent / OD-ML, edit any past day) · **Enter marks** (0–100) |
+| **Faculty** | Dashboard with per-course class attendance · **Mark attendance** per session (1–3 hours, Present / Absent / OD-ML, edit any past day) · **Enter marks**: IA-1, IA-2 (out of 50) and SEM (out of 100), with a live total and grade |
 | **Student** | Dashboard (attendance chart, hours donut, GPA) · Personal details · Course list · **Attendance details** in hours · **Grade / Mark & Credit** with GPA |
 | Everyone | Secure login · Change password · Logout |
 
 - Adding a student or faculty member automatically creates their login.
 - A student automatically takes every course of their **department and year** (department is stored upper-case, so "cse" = "CSE").
-- Grades: O ≥ 90, A+ ≥ 80, A ≥ 70, B+ ≥ 60, B ≥ 50, C ≥ 40, F < 40. Grade points: O 10, A+ 9, A 8, B+ 7, B 6, C 5, F 0.
+- Marks: **IA-1** and **IA-2** are out of 50, **SEM** out of 100. **Total** (out of 100) = (IA-1 + IA-2) × 0.4 + SEM × 0.6, i.e. internals 40% and semester exam 60%. A course is graded once all three are entered.
+- Grades (on the total): O ≥ 90, A+ ≥ 80, A ≥ 70, B+ ≥ 60, B ≥ 50, C ≥ 40, F < 40. Grade points: O 10, A+ 9, A 8, B+ 7, B 6, C 5, F 0.
 - **GPA** = Σ(credits × grade point) ÷ Σ(credits of graded courses).
 
 ### Attendance rules
@@ -96,7 +97,7 @@ src/main/java/com/college/erp/
 │   ├── User, Role             Login accounts
 │   ├── Student, Faculty       People
 │   ├── Course                 Subjects
-│   ├── Attendance, Mark       Records (attendance = hours + status)
+│   ├── Attendance, Mark       Records (attendance = hours + status, mark = IA-1 / IA-2 / SEM)
 │   └── AttendanceStatus       PRESENT / ABSENT / OD
 ├── repository/                Spring Data JPA interfaces (database queries)
 ├── service/
@@ -106,7 +107,7 @@ src/main/java/com/college/erp/
 │   ├── MarkService            Saving marks, grades
 │   ├── UserService            Login lookup, create user, change password
 │   ├── CurrentUser            Finds the logged-in student/faculty
-│   └── GradeUtil              Grade, grade point and percentage calculation
+│   └── GradeUtil              Grade, grade point, total mark and percentage calculation
 └── controller/                Handle web requests, return pages
     ├── AuthController         Login, home redirect, change password
     ├── AdminController        /admin/**
@@ -133,7 +134,7 @@ src/main/resources/
 | `faculty` | name, department, email, user_id |
 | `course` | code, name, department, study_year, credits, faculty_id |
 | `attendance` | student_id, course_id, class_date, present |
-| `marks` | student_id, course_id, score |
+| `exam_marks` | student_id, course_id, ia1, ia2, sem |
 
 ## How It Works (Request Flow)
 
